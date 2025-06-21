@@ -2,108 +2,310 @@ let aiButton = null;
 
 function init() {
   if (window.location.href.includes('outlook.')) {
+    console.log('AI Email Assistant: Initializing for Outlook');
     observeOutlookChanges();
+    
+    // Also run checks periodically for dynamic content
+    setInterval(() => {
+      checkForComposeWindow();
+    }, 2000);
   }
 }
 
 function observeOutlookChanges() {
+  console.log('AI Email Assistant: Setting up Outlook observers');
+  
+  // More aggressive observer
   const observer = new MutationObserver((mutations) => {
+    let shouldCheck = false;
     mutations.forEach((mutation) => {
       if (mutation.addedNodes.length > 0) {
-        checkForComposeWindow();
+        shouldCheck = true;
       }
     });
+    
+    if (shouldCheck) {
+      // Debounce the check
+      clearTimeout(window.outlookCheckTimeout);
+      window.outlookCheckTimeout = setTimeout(() => {
+        checkForComposeWindow();
+      }, 500);
+    }
   });
 
   observer.observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class', 'data-app-section', 'aria-label']
   });
 
-  checkForComposeWindow();
+  // Initial check
+  setTimeout(() => checkForComposeWindow(), 1000);
+  setTimeout(() => checkForComposeWindow(), 3000);
+  setTimeout(() => checkForComposeWindow(), 5000);
 }
 
 function checkForComposeWindow() {
-  // Multiple selectors to catch different Outlook compose modes
+  console.log('AI Email Assistant: Checking for Outlook compose window');
+  
+  // Much more comprehensive selectors for different Outlook versions
   const composeSelectors = [
+    // Standard compose selectors
     'div[contenteditable="true"][role="textbox"]',
-    'div[data-app-section="ConversationContainer"] div[contenteditable="true"]',
-    'div[aria-label*="Message body"]',
     'div[contenteditable="true"][aria-label*="body"]',
+    'div[contenteditable="true"][aria-label*="Message body"]',
+    'div[contenteditable="true"][aria-label*="message"]',
+    
+    // Outlook Web App selectors
+    'div[data-app-section="ConversationContainer"] div[contenteditable="true"]',
     'div[data-app-section="ComposeBodyContainer"] div[contenteditable="true"]',
+    'div[data-app-section="BodyContainer"] div[contenteditable="true"]',
+    'div[data-app-section="MessageBody"] div[contenteditable="true"]',
+    
+    // Generic compose selectors
     'div.compose-body-container div[contenteditable="true"]',
-    'div[role="textbox"][contenteditable="true"]'
+    'div[role="textbox"][contenteditable="true"]',
+    'div[contenteditable="true"][data-outlook-cycle]',
+    
+    // More specific selectors
+    'div[id*="compose"] div[contenteditable="true"]',
+    'div[class*="compose"] div[contenteditable="true"]',
+    'div[aria-label*="compose"] div[contenteditable="true"]',
+    
+    // Fallback selectors
+    '[contenteditable="true"]',
+    'iframe[title*="Rich Text Editor"]'
   ];
   
   let composeArea = null;
+  let usedSelector = '';
+  
   for (const selector of composeSelectors) {
-    composeArea = document.querySelector(selector);
-    if (composeArea) {
-      console.log(`AI Email Assistant: Found Outlook compose area with selector: ${selector}`);
-      break;
+    const elements = document.querySelectorAll(selector);
+    
+    for (const element of elements) {
+      // Check if this looks like a compose area
+      if (isValidComposeArea(element)) {
+        composeArea = element;
+        usedSelector = selector;
+        console.log(`AI Email Assistant: Found Outlook compose area with selector: ${selector}`);
+        break;
+      }
     }
+    
+    if (composeArea) break;
   }
   
   if (composeArea && !document.getElementById('ai-email-button-outlook')) {
     console.log('AI Email Assistant: Adding AI button to Outlook compose area');
     addAIButton(composeArea);
+  } else if (!composeArea) {
+    console.log('AI Email Assistant: No Outlook compose area found');
+  } else {
+    console.log('AI Email Assistant: Outlook button already exists');
   }
   
-  // Also check for reply scenarios
-  const replyContainers = document.querySelectorAll('div[data-app-section="ComposeContainer"]');
-  replyContainers.forEach(container => {
-    const textbox = container.querySelector('div[contenteditable="true"]');
-    if (textbox && !document.getElementById('ai-email-button-outlook')) {
-      console.log('AI Email Assistant: Adding AI button to Outlook reply container');
-      addAIButton(textbox);
-    }
-  });
+  // Also try more aggressive searching
+  setTimeout(() => aggressiveButtonPlacement(), 1000);
 }
 
-function addAIButton(composeArea) {
+function isValidComposeArea(element) {
+  // Check if this element looks like a real compose area
+  if (!element || !element.isConnected) return false;
+  
+  // Must be contenteditable
+  if (!element.contentEditable || element.contentEditable === 'false') return false;
+  
+  // Must be visible
+  const rect = element.getBoundingClientRect();
+  if (rect.width < 50 || rect.height < 20) return false;
+  
+  // Check if it's in a compose context
+  const parentText = element.closest('div')?.textContent || '';
+  const hasComposeContext = parentText.includes('To:') || 
+                           parentText.includes('Subject:') ||
+                           parentText.includes('Send') ||
+                           element.closest('[data-app-section*="Compose"]') ||
+                           element.closest('[data-app-section*="Message"]');
+  
+  return hasComposeContext;
+}
+
+function aggressiveButtonPlacement() {
+  // If we still don't have a button, try more aggressive placement
   if (document.getElementById('ai-email-button-outlook')) {
     return; // Button already exists
   }
+  
+  console.log('AI Email Assistant: Trying aggressive Outlook button placement');
+  
+  // Look for any contenteditable area and try to place button nearby
+  const editableAreas = document.querySelectorAll('[contenteditable="true"]');
+  
+  for (const area of editableAreas) {
+    const rect = area.getBoundingClientRect();
+    if (rect.width > 100 && rect.height > 50) {
+      console.log('AI Email Assistant: Found potential compose area, placing button');
+      addAIButton(area);
+      return;
+    }
+  }
+  
+  // Last resort: create floating button
+  createFloatingButton();
+}
 
-  // Try multiple placement strategies for Outlook
+function createFloatingButton() {
+  if (document.getElementById('ai-floating-button-outlook')) {
+    return; // Already exists
+  }
+  
+  console.log('AI Email Assistant: Creating floating Outlook button');
+  
+  const floatingButton = document.createElement('div');
+  floatingButton.id = 'ai-floating-button-outlook';
+  floatingButton.innerHTML = '🤖 AI Email Assistant';
+  floatingButton.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Segoe UI', 'Segoe UI Web', Arial, sans-serif;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    transition: all 0.2s ease;
+  `;
+  
+  floatingButton.addEventListener('click', () => {
+    // Find any compose area and generate response
+    const composeArea = document.querySelector('[contenteditable="true"]');
+    if (composeArea) {
+      generateAIResponse(composeArea);
+    } else {
+      alert('Please click in an email compose area first, then try again.');
+    }
+  });
+  
+  floatingButton.addEventListener('mouseenter', () => {
+    floatingButton.style.transform = 'scale(1.05)';
+    floatingButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+  });
+  
+  floatingButton.addEventListener('mouseleave', () => {
+    floatingButton.style.transform = 'scale(1)';
+    floatingButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+  });
+  
+  document.body.appendChild(floatingButton);
+  
+  // Remove after 30 seconds if not used
+  setTimeout(() => {
+    if (floatingButton.parentNode && !document.getElementById('ai-email-button-outlook')) {
+      floatingButton.style.opacity = '0.5';
+      floatingButton.innerHTML = '🤖 Click to activate';
+    }
+  }, 30000);
+}
+
+function addAIButton(composeArea) {
+  if (document.getElementById('ai-email-button-outlook') || document.getElementById('ai-email-container-outlook')) {
+    return; // Button already exists
+  }
+
+  console.log('AI Email Assistant: Starting Outlook button placement');
+  
+  // Try multiple placement strategies for Outlook (much more aggressive)
   let targetElement = null;
+  let placementStrategy = '';
   
   // Strategy 1: Find toolbar near compose area
-  const toolbar = composeArea.closest('div').querySelector('div[role="toolbar"]') ||
-                 composeArea.parentElement.querySelector('button[aria-label*="Send"]')?.parentElement ||
-                 composeArea.parentElement.querySelector('div[data-app-section="ToolbarHost"]') ||
-                 composeArea.closest('div').querySelector('div[data-app-section="ToolbarHost"]');
+  const toolbarSelectors = [
+    'div[role="toolbar"]',
+    'div[data-app-section="ToolbarHost"]',
+    'div[data-app-section="CommandBar"]',
+    'div[data-app-section="Toolbar"]',
+    '.ms-CommandBar',
+    '[role="menubar"]'
+  ];
+  
+  for (const selector of toolbarSelectors) {
+    const toolbar = composeArea.closest('div').querySelector(selector) ||
+                   composeArea.parentElement.querySelector(selector) ||
+                   document.querySelector(selector);
+    
+    if (toolbar && toolbar.offsetWidth > 100) {
+      targetElement = toolbar;
+      placementStrategy = `toolbar (${selector})`;
+      break;
+    }
+  }
   
   // Strategy 2: Find send button and place near it
-  const sendButton = document.querySelector('button[aria-label*="Send"]') ||
-                    document.querySelector('button[data-app-section="SendButton"]') ||
-                    document.querySelector('button[title*="Send"]');
+  if (!targetElement) {
+    const sendSelectors = [
+      'button[aria-label*="Send"]',
+      'button[data-app-section="SendButton"]',
+      'button[title*="Send"]',
+      'button[name*="send"]',
+      'button[id*="send"]',
+      'div[data-app-section="PrimaryCommand"]',
+      '.ms-Button--primary'
+    ];
+    
+    for (const selector of sendSelectors) {
+      const sendButton = document.querySelector(selector);
+      if (sendButton && sendButton.offsetParent) {
+        targetElement = sendButton.parentElement;
+        placementStrategy = `send button parent (${selector})`;
+        break;
+      }
+    }
+  }
   
-  // Strategy 3: Find compose window
-  const composeWindow = composeArea.closest('div[data-app-section="ComposeContainer"]') ||
-                       composeArea.closest('div[role="dialog"]') ||
-                       composeArea.closest('.compose-container');
+  // Strategy 3: Find compose window containers
+  if (!targetElement) {
+    const composeContainerSelectors = [
+      'div[data-app-section="ComposeContainer"]',
+      'div[data-app-section="MessageContainer"]',
+      'div[role="dialog"]',
+      'div[role="main"]',
+      '.compose-container',
+      'div[class*="compose"]',
+      'div[aria-label*="compose"]'
+    ];
+    
+    for (const selector of composeContainerSelectors) {
+      const container = composeArea.closest(selector);
+      if (container) {
+        // Create our own toolbar area
+        const customToolbar = document.createElement('div');
+        customToolbar.style.cssText = `
+          padding: 12px;
+          border-top: 1px solid #e1e1e1;
+          background: #faf9f8;
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          margin-top: 8px;
+        `;
+        container.appendChild(customToolbar);
+        targetElement = customToolbar;
+        placementStrategy = `custom toolbar in ${selector}`;
+        break;
+      }
+    }
+  }
   
-  if (toolbar) {
-    targetElement = toolbar;
-  } else if (sendButton && sendButton.parentElement) {
-    targetElement = sendButton.parentElement;
-  } else if (composeWindow) {
-    // Create our own toolbar area
-    const customToolbar = document.createElement('div');
-    customToolbar.style.cssText = `
-      padding: 12px;
-      border-top: 1px solid #e1e1e1;
-      background: #faf9f8;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      margin-top: 8px;
-    `;
-    composeWindow.appendChild(customToolbar);
-    targetElement = customToolbar;
-  } else {
-    // Fallback: Place relative to compose area
+  // Strategy 4: Place above or below compose area
+  if (!targetElement) {
     const fallbackContainer = document.createElement('div');
     fallbackContainer.style.cssText = `
       position: relative;
@@ -113,10 +315,40 @@ function addAIButton(composeArea) {
       background: #f3f2f1;
       border-radius: 6px;
       border-left: 4px solid #0078d4;
+      z-index: 1000;
     `;
-    composeArea.parentElement.insertBefore(fallbackContainer, composeArea.nextSibling);
-    targetElement = fallbackContainer;
+    
+    if (composeArea.parentElement) {
+      composeArea.parentElement.insertBefore(fallbackContainer, composeArea.nextSibling);
+      targetElement = fallbackContainer;
+      placementStrategy = 'fallback container after compose area';
+    } else {
+      composeArea.insertAdjacentElement('afterend', fallbackContainer);
+      targetElement = fallbackContainer;
+      placementStrategy = 'fallback container adjacent to compose area';
+    }
   }
+  
+  // Strategy 5: Last resort - floating positioning
+  if (!targetElement) {
+    const rect = composeArea.getBoundingClientRect();
+    const floatingContainer = document.createElement('div');
+    floatingContainer.style.cssText = `
+      position: absolute;
+      top: ${rect.bottom + 10}px;
+      left: ${rect.left}px;
+      z-index: 10000;
+      background: white;
+      padding: 8px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    `;
+    document.body.appendChild(floatingContainer);
+    targetElement = floatingContainer;
+    placementStrategy = 'floating position';
+  }
+  
+  console.log(`AI Email Assistant: Using placement strategy: ${placementStrategy}`);
   
   if (targetElement) {
     // Create container for AI buttons
@@ -278,13 +510,77 @@ function addAIButton(composeArea) {
     });
     
     console.log('AI Email Assistant: Outlook button with options added successfully');
+  } else {
+    console.error('AI Email Assistant: Failed to find target element for Outlook button');
+    
+    // Emergency fallback - create a very visible notification
+    createEmergencyButton(composeArea);
   }
+}
+
+function createEmergencyButton(composeArea) {
+  if (document.getElementById('ai-emergency-button-outlook')) {
+    return;
+  }
+  
+  console.log('AI Email Assistant: Creating emergency Outlook button');
+  
+  const emergencyButton = document.createElement('div');
+  emergencyButton.id = 'ai-emergency-button-outlook';
+  emergencyButton.innerHTML = `
+    <div style="
+      background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(255,107,53,0.3);
+      margin: 16px 0;
+      font-family: 'Segoe UI', 'Segoe UI Web', Arial, sans-serif;
+    ">
+      🤖 AI EMAIL ASSISTANT - CLICK TO GENERATE RESPONSE
+    </div>
+  `;
+  
+  emergencyButton.addEventListener('click', () => {
+    generateAIResponse(composeArea);
+  });
+  
+  // Try to place it in various locations
+  if (composeArea.parentElement) {
+    composeArea.parentElement.insertBefore(emergencyButton, composeArea);
+  } else {
+    composeArea.insertAdjacentElement('beforebegin', emergencyButton);
+  }
+  
+  // Add pulsing animation to make it very obvious
+  emergencyButton.animate([
+    { transform: 'scale(1)', opacity: '1' },
+    { transform: 'scale(1.05)', opacity: '0.9' },
+    { transform: 'scale(1)', opacity: '1' }
+  ], {
+    duration: 2000,
+    iterations: Infinity
+  });
 }
 
 async function generateAIResponse(composeArea, tone = 'professional') {
   try {
-    aiButton.disabled = true;
-    aiButton.innerHTML = '🔄 Generating...';
+    // Find any available button to update
+    const buttonElement = aiButton || 
+                         document.getElementById('ai-email-button-outlook') ||
+                         document.getElementById('ai-floating-button-outlook') ||
+                         document.getElementById('ai-emergency-button-outlook');
+    
+    if (buttonElement) {
+      buttonElement.disabled = true;
+      const originalHTML = buttonElement.innerHTML;
+      buttonElement.innerHTML = '🔄 Generating...';
+      buttonElement.style.pointerEvents = 'none';
+    }
     
     const emailChain = extractEmailChain();
     const attachments = extractAttachments();
@@ -310,23 +606,31 @@ async function generateAIResponse(composeArea, tone = 'professional') {
       composeArea.focus();
       
       // Show success feedback
-      const originalText = aiButton.innerHTML;
-      aiButton.innerHTML = '✅ Generated!';
-      aiButton.style.background = 'linear-gradient(135deg, #107c10 0%, #0e4b0e 100%)';
-      
-      setTimeout(() => {
-        aiButton.innerHTML = originalText;
-        aiButton.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
-      }, 2000);
+      if (buttonElement) {
+        const originalText = buttonElement.innerHTML;
+        buttonElement.innerHTML = '✅ Generated!';
+        buttonElement.style.background = 'linear-gradient(135deg, #107c10 0%, #0e4b0e 100%)';
+        
+        setTimeout(() => {
+          buttonElement.innerHTML = '🤖 Generate AI Reply';
+          buttonElement.style.background = buttonElement.id.includes('emergency') ? 
+            'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)' :
+            'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+          buttonElement.style.pointerEvents = 'auto';
+        }, 2000);
+      }
     } else {
       alert('Error generating response: ' + response.error);
     }
   } catch (error) {
     handleExtensionError(error);
   } finally {
-    aiButton.disabled = false;
-    if (aiButton.innerHTML === '🔄 Generating...') {
-      aiButton.innerHTML = '🤖 Generate AI Reply';
+    if (buttonElement) {
+      buttonElement.disabled = false;
+      buttonElement.style.pointerEvents = 'auto';
+      if (buttonElement.innerHTML === '🔄 Generating...') {
+        buttonElement.innerHTML = '🤖 Generate AI Reply';
+      }
     }
   }
 }

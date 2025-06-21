@@ -102,8 +102,14 @@ A Chrome extension that uses Google's Gemini AI to generate professional email r
    - Test API connection
 
 2. **AI Button Not Appearing**:
-   - Refresh the Gmail/Outlook page
-   - Check browser console for errors (F12 → Console)
+   - **For Gmail**: Refresh the page, button should appear in compose toolbar
+   - **For Outlook**: The extension tries multiple placement strategies:
+     - Standard toolbar placement
+     - Near Send button  
+     - Custom toolbar creation
+     - Emergency orange pulsing button
+     - Floating button (top-right corner)
+   - Check browser console for debugging messages (F12 → Console)
    - Verify extension is enabled in chrome://extensions/
 
 3. **"Gemini API error" Messages**:
@@ -147,10 +153,12 @@ A Chrome extension that uses Google's Gemini AI to generate professional email r
 
 ### Performance Tips
 
-- The extension automatically detects compose windows
+- **Gmail**: Extension detects compose windows automatically and places buttons in toolbar
+- **Outlook**: Extension uses aggressive detection with multiple fallback strategies
 - Generated responses typically take 2-5 seconds
 - Large email chains may take longer to process
 - Enable attachment analysis only when needed for better performance
+- If button doesn't appear immediately in Outlook, wait 2-3 seconds for detection cycle
 
 ## File Structure
 
