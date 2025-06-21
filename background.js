@@ -14,8 +14,21 @@ chrome.action.onClicked.addListener((tab) => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'generateResponse') {
     handleGenerateResponse(request.data)
-      .then(response => sendResponse({ success: true, data: response }))
-      .catch(error => sendResponse({ success: false, error: error.message }));
+      .then(response => {
+        try {
+          sendResponse({ success: true, data: response });
+        } catch (error) {
+          console.error('Error sending response:', error);
+        }
+      })
+      .catch(error => {
+        console.error('Error in handleGenerateResponse:', error);
+        try {
+          sendResponse({ success: false, error: error.message });
+        } catch (sendError) {
+          console.error('Error sending error response:', sendError);
+        }
+      });
     return true;
   }
 });

@@ -288,7 +288,12 @@ async function generateAIResponse(composeArea, tone = 'professional') {
     
     console.log('Sending email chain to AI:', emailChain.substring(0, 200) + '...');
     
-    const response = await chrome.runtime.sendMessage({
+    // Check if extension context is still valid
+    if (!chrome.runtime?.id) {
+      throw new Error('Extension context invalidated. Please refresh the page.');
+    }
+    
+    const response = await sendMessageWithRetry({
       action: 'generateResponse',
       data: {
         emailChain,
@@ -314,13 +319,98 @@ async function generateAIResponse(composeArea, tone = 'professional') {
       alert('Error generating response: ' + response.error);
     }
   } catch (error) {
-    alert('Error: ' + error.message);
-    console.error('AI Email Assistant error:', error);
+    handleExtensionError(error);
   } finally {
     aiButton.disabled = false;
     if (aiButton.innerHTML === '🔄 Generating...') {
       aiButton.innerHTML = '🤖 Generate AI Reply';
     }
+  }
+}
+
+async function sendMessageWithRetry(message, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // Check if chrome.runtime is available
+      if (!chrome.runtime?.id) {
+        throw new Error('Extension context invalidated');
+      }
+      
+      const response = await chrome.runtime.sendMessage(message);
+      return response;
+    } catch (error) {
+      console.log(`AI Email Assistant: Attempt ${attempt} failed:`, error.message);
+      
+      if (error.message.includes('Extension context invalidated') || 
+          error.message.includes('message port closed') ||
+          error.message.includes('receiving end does not exist')) {
+        
+        if (attempt === maxRetries) {
+          throw new Error('Extension needs to be reloaded. Please refresh the page and try again.');
+        }
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        continue;
+      }
+      
+      // Non-context errors, rethrow immediately
+      throw error;
+    }
+  }
+}
+
+function handleExtensionError(error) {
+  console.error('AI Email Assistant error:', error);
+  
+  if (error.message.includes('Extension context invalidated') ||
+      error.message.includes('Extension needs to be reloaded') ||
+      error.message.includes('refresh the page')) {
+    
+    // Show user-friendly error with instructions
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      border-radius: 6px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 10000;
+      max-width: 350px;
+      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+      font-size: 14px;
+    `;
+    
+    errorDiv.innerHTML = `
+      <strong>Extension Needs Refresh</strong><br>
+      The AI Email Assistant was updated. Please refresh this page to continue using it.
+      <br><br>
+      <button onclick="window.location.reload()" style="
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 8px;
+      ">Refresh Page</button>
+    `;
+    
+    document.body.appendChild(errorDiv);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+      if (errorDiv.parentNode) {
+        errorDiv.parentNode.removeChild(errorDiv);
+      }
+    }, 10000);
+  } else {
+    // Regular error handling
+    alert('Error: ' + error.message);
   }
 }
 
