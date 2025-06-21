@@ -33,17 +33,45 @@ async function handleGenerateResponse(emailData) {
 Please consider these attachments when crafting your response. If the attachments seem relevant to the conversation, acknowledge them appropriately in your reply.`;
   }
 
-  const prompt = `Please generate a professional email response based on the following email chain. Be concise, professional, and appropriate to the context:
+  // Handle different tone styles
+  const tone = emailData.tone || 'professional';
+  let toneInstructions = '';
+  
+  switch (tone) {
+    case 'formal':
+      toneInstructions = '- Use formal, business-appropriate language\n- Include proper salutations and closings\n- Be respectful and diplomatic';
+      break;
+    case 'casual':
+      toneInstructions = '- Use friendly, conversational language\n- Be approachable and warm\n- Keep it relaxed but professional';
+      break;
+    case 'brief':
+      toneInstructions = '- Keep the response very short and to the point\n- Use bullet points if helpful\n- Include only essential information';
+      break;
+    case 'detailed':
+      toneInstructions = '- Provide comprehensive information\n- Include relevant background context\n- Address all points thoroughly';
+      break;
+    case 'diplomatic':
+      toneInstructions = '- Use tactful and careful language\n- Address sensitive topics thoughtfully\n- Maintain a respectful and understanding tone';
+      break;
+    default:
+      toneInstructions = '- Match the tone and formality level of the original emails\n- Be professional yet personable';
+  }
+
+  const prompt = `Please generate an email response based on the following email chain. 
 
 Email Chain:
 ${emailData.emailChain}${attachmentContext}
 
+Response Style: ${tone.charAt(0).toUpperCase() + tone.slice(1)}
+
 Instructions:
 - Generate only the email response content without signatures, headers, or additional formatting
-- Match the tone and formality level of the original emails
-- Be concise but comprehensive
+${toneInstructions}
+- Be appropriate to the context and conversation flow
 - If replying to a request, be specific about next steps
-- If attachments are mentioned and attachment analysis is enabled, reference them appropriately`;
+- If attachments are mentioned and attachment analysis is enabled, reference them appropriately
+
+Generate the email response now:`;
 
   const modelToUse = selectedModel || 'gemini-1.5-flash';
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${apiKey}`, {

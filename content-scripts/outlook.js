@@ -119,6 +119,18 @@ function addAIButton(composeArea) {
   }
   
   if (targetElement) {
+    // Create container for AI buttons
+    const aiContainer = document.createElement('div');
+    aiContainer.id = 'ai-email-container-outlook';
+    aiContainer.style.cssText = `
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 4px;
+      flex-wrap: wrap;
+    `;
+    
+    // Main AI button
     aiButton = document.createElement('button');
     aiButton.id = 'ai-email-button-outlook';
     aiButton.innerHTML = '🤖 Generate AI Reply';
@@ -131,7 +143,6 @@ function addAIButton(composeArea) {
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
-      margin: 4px;
       font-family: 'Segoe UI', 'Segoe UI Web', Arial, sans-serif;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       transition: all 0.2s ease;
@@ -140,29 +151,124 @@ function addAIButton(composeArea) {
       min-width: 140px;
     `;
     
+    // Dropdown button for more options
+    const dropdownButton = document.createElement('button');
+    dropdownButton.id = 'ai-options-button-outlook';
+    dropdownButton.innerHTML = '▼';
+    dropdownButton.style.cssText = `
+      background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+      color: white;
+      border: none;
+      padding: 12px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'Segoe UI', 'Segoe UI Web', Arial, sans-serif;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+      position: relative;
+      z-index: 1000;
+    `;
+    
+    // Options menu
+    const optionsMenu = document.createElement('div');
+    optionsMenu.id = 'ai-options-menu-outlook';
+    optionsMenu.style.cssText = `
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: white;
+      border: 1px solid #d1d1d1;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 1001;
+      min-width: 200px;
+      margin-top: 4px;
+    `;
+    
+    const options = [
+      { text: '🎯 Formal Response', tone: 'formal' },
+      { text: '💬 Casual Response', tone: 'casual' },
+      { text: '📝 Brief Response', tone: 'brief' },
+      { text: '📋 Detailed Response', tone: 'detailed' },
+      { text: '🤝 Diplomatic Response', tone: 'diplomatic' }
+    ];
+    
+    options.forEach(option => {
+      const optionItem = document.createElement('div');
+      optionItem.style.cssText = `
+        padding: 12px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+        font-family: 'Segoe UI', 'Segoe UI Web', Arial, sans-serif;
+        transition: background-color 0.2s ease;
+      `;
+      optionItem.textContent = option.text;
+      
+      optionItem.addEventListener('mouseenter', () => {
+        optionItem.style.backgroundColor = '#f3f2f1';
+      });
+      
+      optionItem.addEventListener('mouseleave', () => {
+        optionItem.style.backgroundColor = 'white';
+      });
+      
+      optionItem.addEventListener('click', () => {
+        generateAIResponse(composeArea, option.tone);
+        optionsMenu.style.display = 'none';
+      });
+      
+      optionsMenu.appendChild(optionItem);
+    });
+    
+    aiContainer.appendChild(aiButton);
+    aiContainer.appendChild(dropdownButton);
+    aiContainer.appendChild(optionsMenu);
+    
     // Add hover effects
-    aiButton.addEventListener('mouseenter', () => {
-      aiButton.style.background = 'linear-gradient(135deg, #005a9e 0%, #004578 100%)';
-      aiButton.style.transform = 'translateY(-1px)';
-      aiButton.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+    [aiButton, dropdownButton].forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        btn.style.background = 'linear-gradient(135deg, #005a9e 0%, #004578 100%)';
+        btn.style.transform = 'translateY(-1px)';
+        btn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+      });
+      
+      btn.addEventListener('mouseleave', () => {
+        btn.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+        btn.style.transform = 'translateY(0)';
+        btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+      });
     });
     
-    aiButton.addEventListener('mouseleave', () => {
-      aiButton.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
-      aiButton.style.transform = 'translateY(0)';
-      aiButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-    });
-    
+    // Main button click
     aiButton.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       generateAIResponse(composeArea);
     });
     
-    targetElement.appendChild(aiButton);
+    // Dropdown button click
+    dropdownButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isVisible = optionsMenu.style.display === 'block';
+      optionsMenu.style.display = isVisible ? 'none' : 'block';
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!aiContainer.contains(e.target)) {
+        optionsMenu.style.display = 'none';
+      }
+    });
+    
+    targetElement.appendChild(aiContainer);
     
     // Add a subtle animation to draw attention
-    aiButton.animate([
+    aiContainer.animate([
       { transform: 'scale(1)', opacity: '0.8' },
       { transform: 'scale(1.05)', opacity: '1' },
       { transform: 'scale(1)', opacity: '1' }
@@ -171,11 +277,11 @@ function addAIButton(composeArea) {
       easing: 'ease-out'
     });
     
-    console.log('AI Email Assistant: Outlook button added successfully');
+    console.log('AI Email Assistant: Outlook button with options added successfully');
   }
 }
 
-async function generateAIResponse(composeArea) {
+async function generateAIResponse(composeArea, tone = 'professional') {
   try {
     aiButton.disabled = true;
     aiButton.innerHTML = '🔄 Generating...';
@@ -183,70 +289,241 @@ async function generateAIResponse(composeArea) {
     const emailChain = extractEmailChain();
     const attachments = extractAttachments();
     
+    console.log('Sending Outlook email chain to AI:', emailChain.substring(0, 200) + '...');
+    
     const response = await chrome.runtime.sendMessage({
       action: 'generateResponse',
       data: {
         emailChain,
-        attachments
+        attachments,
+        tone
       }
     });
     
     if (response.success) {
       composeArea.innerHTML = response.data;
       composeArea.focus();
+      
+      // Show success feedback
+      const originalText = aiButton.innerHTML;
+      aiButton.innerHTML = '✅ Generated!';
+      aiButton.style.background = 'linear-gradient(135deg, #107c10 0%, #0e4b0e 100%)';
+      
+      setTimeout(() => {
+        aiButton.innerHTML = originalText;
+        aiButton.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+      }, 2000);
     } else {
       alert('Error generating response: ' + response.error);
     }
   } catch (error) {
     alert('Error: ' + error.message);
+    console.error('AI Email Assistant Outlook error:', error);
   } finally {
     aiButton.disabled = false;
-    aiButton.innerHTML = '🤖 AI Reply';
+    if (aiButton.innerHTML === '🔄 Generating...') {
+      aiButton.innerHTML = '🤖 Generate AI Reply';
+    }
   }
 }
 
 function extractEmailChain() {
+  console.log('AI Email Assistant: Starting Outlook email chain extraction');
   const emails = [];
   
+  // Try multiple strategies to find conversation container
   const conversationContainer = document.querySelector('div[data-app-section="ConversationContainer"]') ||
                                document.querySelector('div[role="main"]') ||
-                               document.querySelector('.wide-content-host');
+                               document.querySelector('.wide-content-host') ||
+                               document.querySelector('div[data-app-section="ReadingPaneContainer"]') ||
+                               document.querySelector('.scrollable-pane') ||
+                               document.body;
   
-  if (!conversationContainer) return '';
+  if (!conversationContainer) {
+    console.log('AI Email Assistant: No Outlook conversation container found');
+    return 'No conversation container found';
+  }
   
-  const emailElements = conversationContainer.querySelectorAll('div[data-convid]') ||
-                       conversationContainer.querySelectorAll('.ItemPart-container') ||
-                       conversationContainer.querySelectorAll('div[role="listitem"]');
+  // Enhanced selectors for Outlook email messages
+  const emailSelectors = [
+    'div[data-convid]',
+    '.ItemPart-container',
+    'div[role="listitem"]',
+    'div[data-app-section="MessageContainer"]',
+    'div[data-app-section="ItemContainer"]',
+    '.message-item',
+    'div[aria-label*="message"]'
+  ];
+  
+  let emailElements = [];
+  for (const selector of emailSelectors) {
+    emailElements = conversationContainer.querySelectorAll(selector);
+    if (emailElements.length > 0) {
+      console.log(`AI Email Assistant: Found ${emailElements.length} Outlook emails using selector: ${selector}`);
+      break;
+    }
+  }
+  
+  if (emailElements.length === 0) {
+    // Fallback: try to extract from current view
+    console.log('AI Email Assistant: No Outlook email elements found, trying fallback extraction');
+    const fallbackContent = extractOutlookFallbackContent();
+    return fallbackContent || 'No email content could be extracted from the current Outlook view';
+  }
   
   emailElements.forEach((emailEl, index) => {
-    const senderEl = emailEl.querySelector('span[title*="@"]') ||
-                    emailEl.querySelector('button[aria-label*="@"]') ||
-                    emailEl.querySelector('.sender-name');
-    
-    const sender = senderEl ? (senderEl.textContent || senderEl.getAttribute('title') || senderEl.getAttribute('aria-label')) : 'Unknown Sender';
-    
-    const subjectEl = document.querySelector('span[data-app-section="SubjectContainer"]') ||
-                     document.querySelector('h1') ||
-                     emailEl.querySelector('.subject');
-    
-    const subject = subjectEl ? subjectEl.textContent : 'No Subject';
-    
-    const bodyEl = emailEl.querySelector('div[data-app-section="BodyContainer"]') ||
-                  emailEl.querySelector('.email-body') ||
-                  emailEl.querySelector('div[role="document"]');
-    
-    const body = bodyEl ? bodyEl.innerText.trim() : '';
-    
-    if (body && body.length > 10) {
-      emails.push(`Email ${index + 1}:
+    try {
+      // Extract sender information with multiple strategies
+      const senderSelectors = [
+        'span[title*="@"]',
+        'button[aria-label*="@"]',
+        '.sender-name',
+        'div[data-app-section="SenderContainer"] span',
+        'button[data-app-section="PersonaButton"]',
+        '.persona-name',
+        'span[data-automation-id="sender-name"]'
+      ];
+      
+      let sender = 'Unknown Sender';
+      for (const selector of senderSelectors) {
+        const senderEl = emailEl.querySelector(selector);
+        if (senderEl) {
+          sender = senderEl.textContent || 
+                  senderEl.getAttribute('title') || 
+                  senderEl.getAttribute('aria-label') || 
+                  sender;
+          break;
+        }
+      }
+      
+      // Extract timestamp
+      const timestampSelectors = [
+        'span[data-app-section="TimeStamp"]',
+        '.timestamp',
+        'span[title*="20"]',
+        'time',
+        'span[data-automation-id="date-time"]'
+      ];
+      
+      let timestamp = '';
+      for (const selector of timestampSelectors) {
+        const timestampEl = emailEl.querySelector(selector);
+        if (timestampEl) {
+          timestamp = timestampEl.textContent || 
+                     timestampEl.getAttribute('title') || 
+                     timestampEl.getAttribute('datetime') || 
+                     '';
+          break;
+        }
+      }
+      
+      // Extract subject (usually at thread level)
+      const subjectSelectors = [
+        'span[data-app-section="SubjectContainer"]',
+        'h1',
+        '.subject',
+        'div[data-app-section="Subject"] span',
+        'span[data-automation-id="subject"]'
+      ];
+      
+      let subject = 'No Subject';
+      for (const selector of subjectSelectors) {
+        const subjectEl = document.querySelector(selector);
+        if (subjectEl && subjectEl.textContent.trim()) {
+          subject = subjectEl.textContent.trim();
+          break;
+        }
+      }
+      
+      // Extract email body with multiple strategies
+      const bodySelectors = [
+        'div[data-app-section="BodyContainer"]',
+        '.email-body',
+        'div[role="document"]',
+        'div[data-app-section="MessageBody"]',
+        '.message-body',
+        'div[contenteditable="false"]',
+        '.rps_e7b5'
+      ];
+      
+      let body = '';
+      for (const selector of bodySelectors) {
+        const bodyEl = emailEl.querySelector(selector);
+        if (bodyEl) {
+          // Get text content and clean it up
+          const textContent = bodyEl.innerText || bodyEl.textContent || '';
+          if (textContent.trim().length > 10) {
+            body = textContent.trim();
+            break;
+          }
+        }
+      }
+      
+      // If no body found, try getting all text from the email element
+      if (!body) {
+        const allText = emailEl.innerText || emailEl.textContent || '';
+        // Filter out common Outlook UI text
+        const filteredText = allText
+          .replace(/^(Reply|Reply All|Forward|Delete|Archive).*/, '')
+          .replace(/Show more.*/, '')
+          .replace(/^\d{1,2}:\d{2}\s*(AM|PM).*/, '')
+          .replace(/Microsoft Outlook.*/, '')
+          .trim();
+        
+        if (filteredText.length > 20) {
+          body = filteredText;
+        }
+      }
+      
+      if (body && body.length > 10) {
+        const emailData = `Email ${index + 1}:
 From: ${sender}
+${timestamp ? `Date: ${timestamp}` : ''}
 Subject: ${subject}
 Body: ${body}
----`);
+---`;
+        
+        emails.push(emailData);
+        console.log(`AI Email Assistant: Extracted Outlook email ${index + 1} from ${sender}`);
+      }
+    } catch (error) {
+      console.log(`AI Email Assistant: Error extracting Outlook email ${index + 1}:`, error);
     }
   });
   
-  return emails.join('\n\n') || 'No email content found';
+  const result = emails.length > 0 ? emails.join('\n\n') : 'No readable email content found';
+  console.log(`AI Email Assistant: Extracted ${emails.length} Outlook emails total`);
+  console.log('Outlook email chain preview:', result.substring(0, 200) + '...');
+  
+  return result;
+}
+
+function extractOutlookFallbackContent() {
+  // Try to extract from visible content in the main Outlook area
+  const mainContent = document.querySelector('div[data-app-section="ConversationContainer"]') ||
+                     document.querySelector('div[role="main"]') ||
+                     document.querySelector('.wide-content-host') ||
+                     document.querySelector('body');
+  
+  if (!mainContent) return null;
+  
+  // Look for any visible email-like content
+  const contentElements = mainContent.querySelectorAll('div, span, p');
+  let visibleText = '';
+  
+  contentElements.forEach(el => {
+    const text = el.innerText || el.textContent || '';
+    if (text.trim().length > 20 && 
+        !text.includes('Outlook') && 
+        !text.includes('Compose') &&
+        !text.includes('Inbox') &&
+        !text.includes('Microsoft') &&
+        el.offsetHeight > 0) {
+      visibleText += text.trim() + '\n';
+    }
+  });
+  
+  return visibleText.length > 50 ? `Fallback Outlook Content:\n${visibleText}` : null;
 }
 
 function extractAttachments() {

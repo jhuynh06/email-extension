@@ -116,6 +116,18 @@ function addAIButton(composeArea) {
   }
   
   if (targetElement) {
+    // Create container for AI buttons
+    const aiContainer = document.createElement('div');
+    aiContainer.id = 'ai-email-container';
+    aiContainer.style.cssText = `
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 4px;
+      flex-wrap: wrap;
+    `;
+    
+    // Main AI button
     aiButton = document.createElement('button');
     aiButton.id = 'ai-email-button';
     aiButton.innerHTML = '🤖 Generate AI Reply';
@@ -128,7 +140,6 @@ function addAIButton(composeArea) {
       cursor: pointer;
       font-size: 14px;
       font-weight: 500;
-      margin: 4px;
       font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       transition: all 0.2s ease;
@@ -137,29 +148,124 @@ function addAIButton(composeArea) {
       min-width: 140px;
     `;
     
+    // Dropdown button for more options
+    const dropdownButton = document.createElement('button');
+    dropdownButton.id = 'ai-options-button';
+    dropdownButton.innerHTML = '▼';
+    dropdownButton.style.cssText = `
+      background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+      color: white;
+      border: none;
+      padding: 12px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+      position: relative;
+      z-index: 1000;
+    `;
+    
+    // Options menu
+    const optionsMenu = document.createElement('div');
+    optionsMenu.id = 'ai-options-menu';
+    optionsMenu.style.cssText = `
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 1001;
+      min-width: 200px;
+      margin-top: 4px;
+    `;
+    
+    const options = [
+      { text: '🎯 Formal Response', tone: 'formal' },
+      { text: '💬 Casual Response', tone: 'casual' },
+      { text: '📝 Brief Response', tone: 'brief' },
+      { text: '📋 Detailed Response', tone: 'detailed' },
+      { text: '🤝 Diplomatic Response', tone: 'diplomatic' }
+    ];
+    
+    options.forEach(option => {
+      const optionItem = document.createElement('div');
+      optionItem.style.cssText = `
+        padding: 12px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+        font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+        transition: background-color 0.2s ease;
+      `;
+      optionItem.textContent = option.text;
+      
+      optionItem.addEventListener('mouseenter', () => {
+        optionItem.style.backgroundColor = '#f5f5f5';
+      });
+      
+      optionItem.addEventListener('mouseleave', () => {
+        optionItem.style.backgroundColor = 'white';
+      });
+      
+      optionItem.addEventListener('click', () => {
+        generateAIResponse(composeArea, option.tone);
+        optionsMenu.style.display = 'none';
+      });
+      
+      optionsMenu.appendChild(optionItem);
+    });
+    
+    aiContainer.appendChild(aiButton);
+    aiContainer.appendChild(dropdownButton);
+    aiContainer.appendChild(optionsMenu);
+    
     // Add hover effects
-    aiButton.addEventListener('mouseenter', () => {
-      aiButton.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
-      aiButton.style.transform = 'translateY(-1px)';
-      aiButton.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+    [aiButton, dropdownButton].forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        btn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
+        btn.style.transform = 'translateY(-1px)';
+        btn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+      });
+      
+      btn.addEventListener('mouseleave', () => {
+        btn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+        btn.style.transform = 'translateY(0)';
+        btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+      });
     });
     
-    aiButton.addEventListener('mouseleave', () => {
-      aiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-      aiButton.style.transform = 'translateY(0)';
-      aiButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-    });
-    
+    // Main button click
     aiButton.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       generateAIResponse(composeArea);
     });
     
-    targetElement.appendChild(aiButton);
+    // Dropdown button click
+    dropdownButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isVisible = optionsMenu.style.display === 'block';
+      optionsMenu.style.display = isVisible ? 'none' : 'block';
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!aiContainer.contains(e.target)) {
+        optionsMenu.style.display = 'none';
+      }
+    });
+    
+    targetElement.appendChild(aiContainer);
     
     // Add a subtle animation to draw attention
-    aiButton.animate([
+    aiContainer.animate([
       { transform: 'scale(1)', opacity: '0.8' },
       { transform: 'scale(1.05)', opacity: '1' },
       { transform: 'scale(1)', opacity: '1' }
@@ -168,11 +274,11 @@ function addAIButton(composeArea) {
       easing: 'ease-out'
     });
     
-    console.log('AI Email Assistant: Button added successfully');
+    console.log('AI Email Assistant: Button with options added successfully');
   }
 }
 
-async function generateAIResponse(composeArea) {
+async function generateAIResponse(composeArea, tone = 'professional') {
   try {
     aiButton.disabled = true;
     aiButton.innerHTML = '🔄 Generating...';
@@ -180,60 +286,210 @@ async function generateAIResponse(composeArea) {
     const emailChain = extractEmailChain();
     const attachments = extractAttachments();
     
+    console.log('Sending email chain to AI:', emailChain.substring(0, 200) + '...');
+    
     const response = await chrome.runtime.sendMessage({
       action: 'generateResponse',
       data: {
         emailChain,
-        attachments
+        attachments,
+        tone
       }
     });
     
     if (response.success) {
       composeArea.innerHTML = response.data;
       composeArea.focus();
+      
+      // Show success feedback
+      const originalText = aiButton.innerHTML;
+      aiButton.innerHTML = '✅ Generated!';
+      aiButton.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
+      
+      setTimeout(() => {
+        aiButton.innerHTML = originalText;
+        aiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+      }, 2000);
     } else {
       alert('Error generating response: ' + response.error);
     }
   } catch (error) {
     alert('Error: ' + error.message);
+    console.error('AI Email Assistant error:', error);
   } finally {
     aiButton.disabled = false;
-    aiButton.innerHTML = '🤖 AI Reply';
+    if (aiButton.innerHTML === '🔄 Generating...') {
+      aiButton.innerHTML = '🤖 Generate AI Reply';
+    }
   }
 }
 
 function extractEmailChain() {
+  console.log('AI Email Assistant: Starting email chain extraction');
   const emails = [];
   
-  const conversationContainer = document.querySelector('div[role="main"]');
-  if (!conversationContainer) return '';
+  // Try multiple strategies to find conversation container
+  const conversationContainer = document.querySelector('div[role="main"]') ||
+                               document.querySelector('.nH.if') ||
+                               document.querySelector('div[gh="tl"]') ||
+                               document.body;
   
-  const emailElements = conversationContainer.querySelectorAll('div[data-message-id]') ||
-                       conversationContainer.querySelectorAll('.ii.gt');
+  if (!conversationContainer) {
+    console.log('AI Email Assistant: No conversation container found');
+    return 'No conversation container found';
+  }
+  
+  // Enhanced selectors for Gmail email messages
+  const emailSelectors = [
+    'div[data-message-id]',
+    '.ii.gt',
+    'div[role="listitem"]',
+    '.adn.ads',
+    'div.h7'
+  ];
+  
+  let emailElements = [];
+  for (const selector of emailSelectors) {
+    emailElements = conversationContainer.querySelectorAll(selector);
+    if (emailElements.length > 0) {
+      console.log(`AI Email Assistant: Found ${emailElements.length} emails using selector: ${selector}`);
+      break;
+    }
+  }
+  
+  if (emailElements.length === 0) {
+    // Fallback: try to extract from current view
+    console.log('AI Email Assistant: No email elements found, trying fallback extraction');
+    const fallbackContent = extractFallbackContent();
+    return fallbackContent || 'No email content could be extracted from the current view';
+  }
   
   emailElements.forEach((emailEl, index) => {
-    const sender = emailEl.querySelector('span[email]')?.getAttribute('email') ||
-                  emailEl.querySelector('.go span')?.textContent ||
-                  'Unknown Sender';
-    
-    const subject = document.querySelector('h2')?.textContent || 'No Subject';
-    
-    const bodyEl = emailEl.querySelector('div[dir="ltr"]') ||
-                  emailEl.querySelector('.ii.gt div') ||
-                  emailEl;
-    
-    const body = bodyEl ? bodyEl.innerText.trim() : '';
-    
-    if (body && body.length > 10) {
-      emails.push(`Email ${index + 1}:
+    try {
+      // Extract sender information
+      const senderSelectors = [
+        'span[email]',
+        '.go span',
+        '.gD span',
+        'span[data-hovercard-id]',
+        '.cf.gJ span'
+      ];
+      
+      let sender = 'Unknown Sender';
+      for (const selector of senderSelectors) {
+        const senderEl = emailEl.querySelector(selector);
+        if (senderEl) {
+          sender = senderEl.getAttribute('email') || senderEl.textContent || sender;
+          break;
+        }
+      }
+      
+      // Extract timestamp
+      const timestampSelectors = [
+        'span[title*="20"]',
+        '.g3 span',
+        'span[data-tooltip*="20"]'
+      ];
+      
+      let timestamp = '';
+      for (const selector of timestampSelectors) {
+        const timestampEl = emailEl.querySelector(selector);
+        if (timestampEl) {
+          timestamp = timestampEl.getAttribute('title') || timestampEl.textContent || '';
+          break;
+        }
+      }
+      
+      // Extract subject (usually at thread level)
+      const subject = document.querySelector('h2')?.textContent ||
+                     document.querySelector('.hP')?.textContent ||
+                     document.querySelector('span[data-thread-id]')?.textContent ||
+                     'No Subject';
+      
+      // Extract email body with multiple strategies
+      const bodySelectors = [
+        'div[dir="ltr"]',
+        '.ii.gt div',
+        '.a3s.aiL',
+        'div.gmail_quote',
+        '.im'
+      ];
+      
+      let body = '';
+      for (const selector of bodySelectors) {
+        const bodyEl = emailEl.querySelector(selector);
+        if (bodyEl) {
+          // Get both text content and preserve some HTML structure
+          const textContent = bodyEl.innerText || bodyEl.textContent || '';
+          if (textContent.trim().length > 10) {
+            body = textContent.trim();
+            break;
+          }
+        }
+      }
+      
+      // If no body found, try getting all text from the email element
+      if (!body) {
+        const allText = emailEl.innerText || emailEl.textContent || '';
+        // Filter out common Gmail UI text
+        const filteredText = allText
+          .replace(/^(Reply|Forward|Delete|Archive|Mark as unread).*/, '')
+          .replace(/Show trimmed content.*/, '')
+          .replace(/^\d{1,2}:\d{2}\s*(AM|PM).*/, '')
+          .trim();
+        
+        if (filteredText.length > 20) {
+          body = filteredText;
+        }
+      }
+      
+      if (body && body.length > 10) {
+        const emailData = `Email ${index + 1}:
 From: ${sender}
+${timestamp ? `Date: ${timestamp}` : ''}
 Subject: ${subject}
 Body: ${body}
----`);
+---`;
+        
+        emails.push(emailData);
+        console.log(`AI Email Assistant: Extracted email ${index + 1} from ${sender}`);
+      }
+    } catch (error) {
+      console.log(`AI Email Assistant: Error extracting email ${index + 1}:`, error);
     }
   });
   
-  return emails.join('\n\n') || 'No email content found';
+  const result = emails.length > 0 ? emails.join('\n\n') : 'No readable email content found';
+  console.log(`AI Email Assistant: Extracted ${emails.length} emails total`);
+  console.log('Email chain preview:', result.substring(0, 200) + '...');
+  
+  return result;
+}
+
+function extractFallbackContent() {
+  // Try to extract from visible content in the main area
+  const mainContent = document.querySelector('div[role="main"]') ||
+                     document.querySelector('.nH.if') ||
+                     document.querySelector('body');
+  
+  if (!mainContent) return null;
+  
+  // Look for any visible email-like content
+  const contentElements = mainContent.querySelectorAll('div, span, p');
+  let visibleText = '';
+  
+  contentElements.forEach(el => {
+    const text = el.innerText || el.textContent || '';
+    if (text.trim().length > 20 && 
+        !text.includes('Gmail') && 
+        !text.includes('Compose') &&
+        !text.includes('Inbox') &&
+        el.offsetHeight > 0) {
+      visibleText += text.trim() + '\n';
+    }
+  });
+  
+  return visibleText.length > 50 ? `Fallback Content:\n${visibleText}` : null;
 }
 
 function extractAttachments() {
