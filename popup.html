@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 350px;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+      color: #333;
+    }
+    
+    .config-section {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #555;
+    }
+    
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    input[type="checkbox"] {
+      margin-right: 8px;
+    }
+    
+    button {
+      background: #4285f4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    
+    button:hover {
+      background: #3367d6;
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+    
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .instructions {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.4;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+    
+    .feature-toggle {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🤖 AI Email Assistant</h1>
+  </div>
+  
+  <div id="status"></div>
+  
+  <div class="config-section">
+    <label for="apiKey">Gemini API Key:</label>
+    <input type="password" id="apiKey" placeholder="Enter your Gemini API key">
+  </div>
+  
+  <div class="config-section">
+    <div class="feature-toggle">
+      <input type="checkbox" id="analyzeAttachments">
+      <label for="analyzeAttachments">Analyze email attachments (experimental)</label>
+    </div>
+  </div>
+  
+  <button id="saveConfig">Save Configuration</button>
+  <button id="testApi">Test API Connection</button>
+  
+  <div class="instructions">
+    <strong>How to use:</strong><br>
+    1. Get your Gemini API key from Google AI Studio<br>
+    2. Enter the key above and click "Save Configuration"<br>
+    3. Open Gmail or Outlook and compose a reply<br>
+    4. Click the "🤖 AI Reply" button to generate a response<br><br>
+    
+    <strong>Supported platforms:</strong><br>
+    • Gmail (mail.google.com)<br>
+    • Outlook Web (outlook.live.com, outlook.office.com)
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
