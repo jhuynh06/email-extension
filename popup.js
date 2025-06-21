@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const apiKeyInput = document.getElementById('apiKey');
+  const modelSelect = document.getElementById('modelSelect');
   const analyzeAttachmentsCheckbox = document.getElementById('analyzeAttachments');
   const saveButton = document.getElementById('saveConfig');
   const testButton = document.getElementById('testApi');
@@ -13,12 +14,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadConfig() {
   try {
-    const config = await chrome.storage.local.get(['apiKey', 'analyzeAttachments']);
+    const config = await chrome.storage.local.get(['apiKey', 'selectedModel', 'analyzeAttachments']);
     
     if (config.apiKey) {
       document.getElementById('apiKey').value = config.apiKey;
     }
     
+    document.getElementById('modelSelect').value = config.selectedModel || 'gemini-1.5-flash';
     document.getElementById('analyzeAttachments').checked = config.analyzeAttachments || false;
   } catch (error) {
     showStatus('Error loading configuration', 'error');
@@ -27,6 +29,7 @@ async function loadConfig() {
 
 async function saveConfig() {
   const apiKey = document.getElementById('apiKey').value.trim();
+  const selectedModel = document.getElementById('modelSelect').value;
   const analyzeAttachments = document.getElementById('analyzeAttachments').checked;
   
   if (!apiKey) {
@@ -37,6 +40,7 @@ async function saveConfig() {
   try {
     await chrome.storage.local.set({
       apiKey: apiKey,
+      selectedModel: selectedModel,
       analyzeAttachments: analyzeAttachments
     });
     
@@ -48,6 +52,7 @@ async function saveConfig() {
 
 async function testApiConnection() {
   const apiKey = document.getElementById('apiKey').value.trim();
+  const selectedModel = document.getElementById('modelSelect').value;
   
   if (!apiKey) {
     showStatus('Please enter an API key first', 'error');
@@ -59,7 +64,7 @@ async function testApiConnection() {
   testButton.textContent = 'Testing...';
   
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

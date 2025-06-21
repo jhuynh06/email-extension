@@ -21,7 +21,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function handleGenerateResponse(emailData) {
-  const { apiKey, analyzeAttachments } = await chrome.storage.local.get(['apiKey', 'analyzeAttachments']);
+  const { apiKey, selectedModel, analyzeAttachments } = await chrome.storage.local.get(['apiKey', 'selectedModel', 'analyzeAttachments']);
   
   if (!apiKey) {
     throw new Error('Gemini API key not configured');
@@ -45,7 +45,8 @@ Instructions:
 - If replying to a request, be specific about next steps
 - If attachments are mentioned and attachment analysis is enabled, reference them appropriately`;
 
-  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey, {
+  const modelToUse = selectedModel || 'gemini-1.5-flash';
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

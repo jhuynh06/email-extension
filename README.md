@@ -9,6 +9,7 @@ A Chrome extension that uses Google's Gemini AI to generate professional email r
 - 📎 Optional attachment analysis and referencing
 - 🔒 Secure API key storage
 - ⚡ One-click response generation
+- 🎛️ Multiple Gemini model selection (Flash, Pro, Experimental)
 
 ## Installation and Testing
 
@@ -34,6 +35,7 @@ A Chrome extension that uses Google's Gemini AI to generate professional email r
 2. **Configure the Extension**:
    - Click the extension icon in Chrome toolbar
    - Enter your Gemini API key
+   - Select your preferred Gemini model from the dropdown
    - Optionally enable attachment analysis
    - Click "Save Configuration"
    - Test the API connection
@@ -105,9 +107,10 @@ A Chrome extension that uses Google's Gemini AI to generate professional email r
    - Verify extension is enabled in chrome://extensions/
 
 3. **"Gemini API error" Messages**:
-   - Check API key validity
+   - Check API key validity (test with "Test API Connection" button)
    - Verify internet connection
    - Check if you've exceeded API quota
+   - If you get 404 "model not found" errors, the API may be using newer model names
 
 4. **Generated Response Not Inserting**:
    - Try clicking in the compose area first
@@ -165,7 +168,15 @@ A Chrome extension that uses Google's Gemini AI to generate professional email r
 
 ## API Usage
 
-The extension uses Google's Gemini Pro model via the REST API. Each request includes:
+The extension supports multiple Gemini models via the REST API:
+
+### Available Models:
+- **Gemini 1.5 Flash** (Default): Fast and efficient for most email responses
+- **Gemini 1.5 Pro**: More capable model for complex email scenarios
+- **Gemini 2.0 Flash Experimental**: Latest experimental model with newest features
+- **Gemini 1.5 Flash 8B**: Lightweight model for simple responses
+
+Each request includes:
 - Email chain context
 - Optional attachment information
 - Professional tone instructions
