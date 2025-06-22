@@ -4,7 +4,7 @@ A Chrome extension that uses Google's Gemini AI to generate professional email r
 
 ## Features
 
-- 🤖 AI-powered email response generation using Gemini AI
+- 🤖 AI-powered email response generation using Gemini AI!
 - 📧 Works with Gmail and Outlook web interfaces
 - 📎 Optional attachment analysis and referencing
 - 🔒 Secure API key storage
