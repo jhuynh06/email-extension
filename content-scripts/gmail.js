@@ -1,18 +1,81 @@
 let aiButton = null;
+let overlayContainer = null;
+let currentComposeArea = null;
+let isGenerating = false;
+let hasGenerated = false;
+let positionUpdateInterval = null;
 
 function init() {
   if (window.location.href.includes('mail.google.com')) {
+    createOverlaySystem();
     observeGmailChanges();
+  }
+}
+
+function createOverlaySystem() {
+  // Create the main overlay container
+  overlayContainer = document.createElement('div');
+  overlayContainer.id = 'ai-email-overlay';
+  overlayContainer.style.cssText = `
+    position: fixed;
+    z-index: 10000;
+    display: none;
+    pointer-events: auto;
+    font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+    contain: layout style;
+    isolation: isolate;
+  `;
+  
+  document.body.appendChild(overlayContainer);
+  
+  // Add overlay styles
+  const overlayStyle = document.createElement('style');
+  overlayStyle.id = 'ai-overlay-styles';
+  overlayStyle.textContent = `
+    #ai-email-overlay {
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
+    }
+    
+    #ai-email-overlay * {
+      box-sizing: border-box !important;
+      transform: none !important;
+    }
+    
+    #ai-email-overlay:hover {
+      filter: drop-shadow(0 6px 16px rgba(0,0,0,0.2));
+    }
+    
+    @keyframes ai-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .ai-generating {
+      animation: ai-pulse 1.5s ease-in-out infinite;
+    }
+  `;
+  
+  if (!document.getElementById('ai-overlay-styles')) {
+    document.head.appendChild(overlayStyle);
   }
 }
 
 function observeGmailChanges() {
   const observer = new MutationObserver((mutations) => {
+    let shouldCheck = false;
     mutations.forEach((mutation) => {
       if (mutation.addedNodes.length > 0) {
-        checkForComposeWindow();
+        shouldCheck = true;
       }
     });
+    
+    if (shouldCheck) {
+      // Debounce the check
+      clearTimeout(window.gmailCheckTimeout);
+      window.gmailCheckTimeout = setTimeout(() => {
+        checkForComposeWindow();
+      }, 300);
+    }
   });
 
   observer.observe(document.body, {
@@ -24,6 +87,8 @@ function observeGmailChanges() {
 }
 
 function checkForComposeWindow() {
+  console.log('AI Email Assistant: Checking for Gmail compose window');
+  
   // Multiple selectors to catch different Gmail compose modes
   const composeSelectors = [
     'div[role="textbox"][aria-label*="Message Body"]',
@@ -37,322 +102,332 @@ function checkForComposeWindow() {
   
   let composeArea = null;
   for (const selector of composeSelectors) {
-    composeArea = document.querySelector(selector);
-    if (composeArea) {
-      console.log(`AI Email Assistant: Found compose area with selector: ${selector}`);
-      break;
+    const elements = document.querySelectorAll(selector);
+    for (const element of elements) {
+      if (isValidComposeArea(element)) {
+        composeArea = element;
+        console.log(`AI Email Assistant: Found Gmail compose area with selector: ${selector}`);
+        break;
+      }
     }
-  }
-  
-  if (composeArea && !document.getElementById('ai-email-button')) {
-    console.log('AI Email Assistant: Adding AI button to Gmail compose area');
-    addAIButton(composeArea);
+    if (composeArea) break;
   }
   
   // Also check for reply/forward scenarios
-  const replyArea = document.querySelector('div[aria-label*="Reply"]') ||
-                   document.querySelector('div[aria-label*="Forward"]');
-  if (replyArea && !document.getElementById('ai-email-button')) {
-    const textbox = replyArea.querySelector('div[contenteditable="true"]');
-    if (textbox) {
-      console.log('AI Email Assistant: Adding AI button to Gmail reply area');
-      addAIButton(textbox);
+  if (!composeArea) {
+    const replyArea = document.querySelector('div[aria-label*="Reply"]') ||
+                     document.querySelector('div[aria-label*="Forward"]');
+    if (replyArea) {
+      const textbox = replyArea.querySelector('div[contenteditable="true"]');
+      if (textbox && isValidComposeArea(textbox)) {
+        composeArea = textbox;
+        console.log('AI Email Assistant: Found Gmail reply area');
+      }
+    }
+  }
+  
+  if (composeArea) {
+    if (currentComposeArea !== composeArea) {
+      currentComposeArea = composeArea;
+      showOverlay(composeArea);
+      // Reset state for new compose area
+      hasGenerated = false;
+      isGenerating = false;
+    }
+  } else {
+    if (currentComposeArea) {
+      currentComposeArea = null;
+      hideOverlay();
     }
   }
 }
 
-function addAIButton(composeArea) {
-  if (document.getElementById('ai-email-button')) {
-    return; // Button already exists
-  }
+function isValidComposeArea(element) {
+  if (!element || !element.isConnected) return false;
+  if (!element.contentEditable || element.contentEditable === 'false') return false;
+  
+  const rect = element.getBoundingClientRect();
+  if (rect.width < 50 || rect.height < 20) return false;
+  
+  // Check if it's visible and in viewport
+  return rect.top >= 0 && rect.left >= 0 && 
+         rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
+}
 
-  // Try multiple placement strategies
-  let targetElement = null;
+function showOverlay(composeArea) {
+  if (!overlayContainer) return;
   
-  // Strategy 1: Find toolbar near compose area
-  const toolbar = composeArea.closest('div').querySelector('div[role="toolbar"]') ||
-                 composeArea.parentElement.querySelector('div[data-tooltip*="Send"]')?.parentElement ||
-                 composeArea.closest('div').querySelector('div[data-tooltip*="Send"]')?.parentElement;
+  // Create the overlay content
+  overlayContainer.innerHTML = '';
   
-  // Strategy 2: Find send button and place near it
-  const sendButton = document.querySelector('div[data-tooltip*="Send"]') ||
-                    document.querySelector('div[role="button"][aria-label*="Send"]') ||
-                    document.querySelector('div[data-tooltip="Send ⌘+Enter"]');
+  const overlayContent = document.createElement('div');
+  overlayContent.style.cssText = `
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    border: 1px solid #e8eaed;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 180px;
+    max-width: 280px;
+  `;
   
-  // Strategy 3: Find compose window bottom area
-  const composeWindow = composeArea.closest('div[role="dialog"]') ||
-                       composeArea.closest('div.T-I-J3');
+  // Main AI button
+  aiButton = document.createElement('button');
+  aiButton.id = 'ai-email-button';
+  updateButtonState();
+  aiButton.style.cssText = `
+    background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  `;
   
-  if (toolbar) {
-    targetElement = toolbar;
-  } else if (sendButton && sendButton.parentElement) {
-    targetElement = sendButton.parentElement;
-  } else if (composeWindow) {
-    // Create our own toolbar area
-    const customToolbar = document.createElement('div');
-    customToolbar.style.cssText = `
-      padding: 6px 8px;
-      border-top: 1px solid #e8eaed;
-      background: #f8f9fa;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      max-width: 100%;
-      overflow: hidden;
-      box-sizing: border-box;
+  // Dropdown button for more options
+  const dropdownButton = document.createElement('button');
+  dropdownButton.id = 'ai-options-button';
+  dropdownButton.innerHTML = '▼';
+  dropdownButton.style.cssText = `
+    background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+    color: white;
+    border: none;
+    padding: 10px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+    transition: all 0.2s ease;
+  `;
+  
+  // Options menu
+  const optionsMenu = document.createElement('div');
+  optionsMenu.id = 'ai-options-menu';
+  optionsMenu.style.cssText = `
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    z-index: 10001;
+    min-width: 200px;
+    overflow: hidden;
+  `;
+  
+  const options = [
+    { text: '🎯 Formal Response', tone: 'formal' },
+    { text: '💬 Casual Response', tone: 'casual' },
+    { text: '📝 Brief Response', tone: 'brief' },
+    { text: '📋 Detailed Response', tone: 'detailed' },
+    { text: '🤝 Diplomatic Response', tone: 'diplomatic' }
+  ];
+  
+  options.forEach(option => {
+    const optionItem = document.createElement('div');
+    optionItem.style.cssText = `
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f3f4;
+      font-size: 13px;
+      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+      transition: background-color 0.15s ease;
+      white-space: nowrap;
     `;
-    composeWindow.appendChild(customToolbar);
-    targetElement = customToolbar;
-  } else {
-    // Fallback: Place relative to compose area
-    const fallbackContainer = document.createElement('div');
-    fallbackContainer.style.cssText = `
-      position: relative;
-      margin: 8px 0;
-      text-align: center;
-      padding: 8px;
-      background: #f8f9fa;
-      border-radius: 6px;
-      border: 1px solid #e8eaed;
-      max-width: 100%;
-      overflow: hidden;
-      box-sizing: border-box;
-    `;
-    composeArea.parentElement.insertBefore(fallbackContainer, composeArea.nextSibling);
-    targetElement = fallbackContainer;
+    optionItem.textContent = option.text;
+    
+    optionItem.addEventListener('mouseenter', () => {
+      optionItem.style.backgroundColor = '#f8f9fa';
+    });
+    
+    optionItem.addEventListener('mouseleave', () => {
+      optionItem.style.backgroundColor = 'white';
+    });
+    
+    optionItem.addEventListener('click', () => {
+      generateAIResponse(composeArea, option.tone);
+      optionsMenu.style.display = 'none';
+    });
+    
+    optionsMenu.appendChild(optionItem);
+  });
+  
+  // Remove the last border
+  if (options.length > 0) {
+    optionsMenu.lastChild.style.borderBottom = 'none';
   }
   
-  if (targetElement) {
-    // Inject CSS to prevent overflow issues globally
-    const overflowFixStyle = document.createElement('style');
-    overflowFixStyle.textContent = `
-      #ai-email-button, #ai-options-button {
-        transform: none !important;
-        box-shadow: none !important;
-        overflow: hidden !important;
-        box-sizing: border-box !important;
-      }
-      
-      #ai-email-button:hover, #ai-options-button:hover {
-        transform: none !important;
-        box-shadow: none !important;
-      }
-      
-      #ai-email-button::before, #ai-email-button::after,
-      #ai-options-button::before, #ai-options-button::after {
-        display: none !important;
-      }
-      
-      #ai-email-container {
-        overflow: visible;
-        contain: layout;
-      }
-    `;
-    
-    if (!document.getElementById('ai-overflow-fix-styles')) {
-      overflowFixStyle.id = 'ai-overflow-fix-styles';
-      document.head.appendChild(overflowFixStyle);
-    }
-    // Create container for AI buttons
-    const aiContainer = document.createElement('div');
-    aiContainer.id = 'ai-email-container';
-    aiContainer.style.cssText = `
-      display: inline-flex;
-      gap: 4px;
-      align-items: center;
-      margin: 4px;
-      flex-wrap: nowrap;
-      max-width: 100%;
-      box-sizing: border-box;
-      position: relative;
-      overflow: visible;
-      contain: layout;
-      transform: none;
-    `;
-    
-    // Main AI button
-    aiButton = document.createElement('button');
-    aiButton.id = 'ai-email-button';
-    aiButton.innerHTML = '🤖 Generate AI Reply';
-    aiButton.style.cssText = `
-      background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-      box-shadow: none;
-      transition: background-color 0.2s ease, opacity 0.2s ease;
-      position: relative;
-      z-index: 1;
-      min-width: 120px;
-      max-width: 150px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      box-sizing: border-box;
-      transform: none;
-    `;
-    
-    // Dropdown button for more options
-    const dropdownButton = document.createElement('button');
-    dropdownButton.id = 'ai-options-button';
-    dropdownButton.innerHTML = '▼';
-    dropdownButton.style.cssText = `
-      background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
-      color: white;
-      border: none;
-      padding: 10px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 500;
-      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-      box-shadow: none;
-      transition: background-color 0.2s ease, opacity 0.2s ease;
-      position: relative;
-      z-index: 1;
-      box-sizing: border-box;
-      transform: none;
-    `;
-    
-    // Options menu
-    const optionsMenu = document.createElement('div');
-    optionsMenu.id = 'ai-options-menu';
-    optionsMenu.style.cssText = `
-      display: none;
-      position: absolute;
-      top: 100%;
-      right: 0;
-      background: white;
-      border: 1px solid #dadce0;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      z-index: 1001;
-      min-width: 180px;
-      max-width: 220px;
-      margin-top: 2px;
-      overflow: hidden;
-      box-sizing: border-box;
-    `;
-    
-    const options = [
-      { text: '🎯 Formal Response', tone: 'formal' },
-      { text: '💬 Casual Response', tone: 'casual' },
-      { text: '📝 Brief Response', tone: 'brief' },
-      { text: '📋 Detailed Response', tone: 'detailed' },
-      { text: '🤝 Diplomatic Response', tone: 'diplomatic' }
-    ];
-    
-    options.forEach(option => {
-      const optionItem = document.createElement('div');
-      optionItem.style.cssText = `
-        padding: 10px 12px;
-        cursor: pointer;
-        border-bottom: 1px solid #f1f3f4;
-        font-size: 13px;
-        font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-        transition: background-color 0.15s ease;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      `;
-      optionItem.textContent = option.text;
-      
-      optionItem.addEventListener('mouseenter', () => {
-        optionItem.style.backgroundColor = '#f5f5f5';
-      });
-      
-      optionItem.addEventListener('mouseleave', () => {
-        optionItem.style.backgroundColor = 'white';
-      });
-      
-      optionItem.addEventListener('click', () => {
-        generateAIResponse(composeArea, option.tone);
-        optionsMenu.style.display = 'none';
-      });
-      
-      optionsMenu.appendChild(optionItem);
+  overlayContent.appendChild(aiButton);
+  overlayContent.appendChild(dropdownButton);
+  overlayContent.appendChild(optionsMenu);
+  
+  overlayContainer.appendChild(overlayContent);
+  
+  // Add hover effects
+  [aiButton, dropdownButton].forEach(btn => {
+    btn.addEventListener('mouseenter', () => {
+      btn.style.background = 'linear-gradient(135deg, #3367d6 0%, #1557b0 100%)';
+      btn.style.transform = 'translateY(-1px)';
     });
     
-    aiContainer.appendChild(aiButton);
-    aiContainer.appendChild(dropdownButton);
-    aiContainer.appendChild(optionsMenu);
-    
-    // Add overflow-safe hover effects - only color and opacity changes
-    [aiButton, dropdownButton].forEach(btn => {
-      // Remove any problematic attributes that might cause overflow
-      btn.removeAttribute('data-tooltip');
-      btn.removeAttribute('aria-describedby');
-      
-      btn.addEventListener('mouseenter', (e) => {
-        // Prevent any default behavior that might cause overflow
-        e.preventDefault();
-        
-        // Force safe styles
-        btn.style.transform = 'none';
-        btn.style.boxShadow = 'none';
-        btn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
-        btn.style.opacity = '0.9';
-      });
-      
-      btn.addEventListener('mouseleave', (e) => {
-        // Prevent any default behavior that might cause overflow
-        e.preventDefault();
-        
-        // Reset to safe styles
-        btn.style.transform = 'none';
-        btn.style.boxShadow = 'none';
-        btn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-        btn.style.opacity = '1';
-      });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+      btn.style.transform = 'translateY(0)';
     });
-    
-    // Main button click
-    aiButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+  });
+  
+  // Main button click
+  aiButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (hasGenerated && !isGenerating) {
+      // Regenerate
+      hasGenerated = false;
       generateAIResponse(composeArea);
-    });
-    
-    // Dropdown button click
-    dropdownButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const isVisible = optionsMenu.style.display === 'block';
-      optionsMenu.style.display = isVisible ? 'none' : 'block';
-    });
-    
-    // Close menu when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!aiContainer.contains(e.target)) {
-        optionsMenu.style.display = 'none';
-      }
-    });
-    
-    targetElement.appendChild(aiContainer);
-    
-    // Add a subtle animation to draw attention
-    aiContainer.animate([
-      { transform: 'scale(1)', opacity: '0.8' },
-      { transform: 'scale(1.05)', opacity: '1' },
-      { transform: 'scale(1)', opacity: '1' }
-    ], {
-      duration: 600,
-      easing: 'ease-out'
-    });
-    
-    console.log('AI Email Assistant: Button with options added successfully');
+    } else if (!isGenerating) {
+      // Generate
+      generateAIResponse(composeArea);
+    }
+  });
+  
+  // Dropdown button click
+  dropdownButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleOptionsMenu(optionsMenu);
+  });
+  
+  // Close menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!overlayContainer.contains(e.target)) {
+      optionsMenu.style.display = 'none';
+    }
+  });
+  
+  // Position and show overlay
+  positionOverlay(composeArea);
+  overlayContainer.style.display = 'block';
+  
+  // Start position monitoring
+  if (positionUpdateInterval) {
+    clearInterval(positionUpdateInterval);
+  }
+  positionUpdateInterval = setInterval(() => {
+    if (currentComposeArea && overlayContainer.style.display === 'block') {
+      positionOverlay(currentComposeArea);
+    }
+  }, 500);
+  
+  console.log('AI Email Assistant: Grammarly-style overlay shown');
+}
+
+function hideOverlay() {
+  if (overlayContainer) {
+    overlayContainer.style.display = 'none';
+  }
+  if (positionUpdateInterval) {
+    clearInterval(positionUpdateInterval);
+    positionUpdateInterval = null;
+  }
+}
+
+function positionOverlay(composeArea) {
+  if (!overlayContainer || !composeArea) return;
+  
+  const rect = composeArea.getBoundingClientRect();
+  const overlayRect = overlayContainer.getBoundingClientRect();
+  
+  // Position to the right of the compose area, with some margin
+  let left = rect.right + 12;
+  let top = rect.top;
+  
+  // Ensure it doesn't go off-screen
+  if (left + overlayRect.width > window.innerWidth) {
+    left = rect.left - overlayRect.width - 12; // Position to the left instead
+  }
+  
+  if (left < 0) {
+    left = 12; // Fallback to left edge with margin
+  }
+  
+  if (top + overlayRect.height > window.innerHeight) {
+    top = window.innerHeight - overlayRect.height - 12;
+  }
+  
+  if (top < 0) {
+    top = 12;
+  }
+  
+  overlayContainer.style.left = `${left}px`;
+  overlayContainer.style.top = `${top}px`;
+}
+
+function toggleOptionsMenu(optionsMenu) {
+  const isVisible = optionsMenu.style.display === 'block';
+  
+  if (isVisible) {
+    optionsMenu.style.display = 'none';
+    return;
+  }
+  
+  // Smart positioning to avoid scrolling
+  const overlayRect = overlayContainer.getBoundingClientRect();
+  const menuWidth = 200;
+  const menuHeight = 250; // Approximate height
+  
+  let menuLeft = 0;
+  let menuTop = '100%';
+  
+  // Check if menu would go off right edge
+  if (overlayRect.right + menuWidth > window.innerWidth) {
+    menuLeft = -(menuWidth - overlayRect.width);
+  }
+  
+  // Check if menu would go off bottom edge
+  if (overlayRect.bottom + menuHeight > window.innerHeight) {
+    menuTop = `-${menuHeight}px`; // Show above instead
+  }
+  
+  optionsMenu.style.left = `${menuLeft}px`;
+  optionsMenu.style.top = menuTop;
+  optionsMenu.style.display = 'block';
+}
+
+function updateButtonState() {
+  if (!aiButton) return;
+  
+  if (isGenerating) {
+    aiButton.innerHTML = '🔄 Generating...';
+    aiButton.classList.add('ai-generating');
+    aiButton.disabled = true;
+  } else if (hasGenerated) {
+    aiButton.innerHTML = '🔄 Regenerate';
+    aiButton.classList.remove('ai-generating');
+    aiButton.disabled = false;
+  } else {
+    aiButton.innerHTML = '🤖 Generate AI Reply';
+    aiButton.classList.remove('ai-generating');
+    aiButton.disabled = false;
   }
 }
 
 async function generateAIResponse(composeArea, tone = 'professional') {
   try {
-    aiButton.disabled = true;
-    aiButton.innerHTML = '🔄 Generating...';
+    isGenerating = true;
+    updateButtonState();
     
     const emailChain = extractEmailChain();
     const attachments = extractAttachments();
@@ -377,25 +452,26 @@ async function generateAIResponse(composeArea, tone = 'professional') {
       composeArea.innerHTML = response.data;
       composeArea.focus();
       
-      // Show success feedback
-      const originalText = aiButton.innerHTML;
-      aiButton.innerHTML = '✅ Generated!';
+      // Update state to show regenerate option
+      hasGenerated = true;
+      isGenerating = false;
+      updateButtonState();
+      
+      // Show brief success feedback
+      const originalBackground = aiButton.style.background;
       aiButton.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
       
       setTimeout(() => {
-        aiButton.innerHTML = originalText;
-        aiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-      }, 2000);
+        aiButton.style.background = originalBackground;
+      }, 1000);
     } else {
-      alert('Error generating response: ' + response.error);
+      throw new Error(response.error || 'Unknown error occurred');
     }
   } catch (error) {
     handleExtensionError(error);
   } finally {
-    aiButton.disabled = false;
-    if (aiButton.innerHTML === '🔄 Generating...') {
-      aiButton.innerHTML = '🤖 Generate AI Reply';
-    }
+    isGenerating = false;
+    updateButtonState();
   }
 }
 
@@ -665,6 +741,13 @@ function extractAttachments() {
   
   return attachments.length > 0 ? attachments.join(', ') : null;
 }
+
+// Cleanup on page navigation
+window.addEventListener('beforeunload', () => {
+  if (positionUpdateInterval) {
+    clearInterval(positionUpdateInterval);
+  }
+});
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
