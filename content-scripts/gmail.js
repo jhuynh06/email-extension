@@ -74,9 +74,8 @@ function addAIButton(composeArea) {
   if (btcRow) {
     const guUpTd = btcRow.querySelector('td.gU.Up');
     const ocGuTd = btcRow.querySelector('td.oc.gU');
-    
+
     if (guUpTd && ocGuTd) {
-      // Create a new td element to insert between gU Up and oc gU
       const aiTd = document.createElement('td');
       aiTd.className = 'gU ai-button-cell';
       aiTd.style.cssText = `
@@ -84,13 +83,18 @@ function addAIButton(composeArea) {
         padding: 0 4px;
         white-space: nowrap;
       `;
-      
-      // Insert the new td after gU Up and before oc gU
+
       btcRow.insertBefore(aiTd, ocGuTd);
-      targetElement = aiTd;
-      console.log('AI Email Assistant: Placed button in btC row between gU Up and oc gU');
+      console.log('AI Email Assistant: Button inserted between gU Up and oc gU');
+
+      injectAIButtonUI(aiTd, composeArea); // ⬅️ Call helper function here
+      return;
+    } else {
+      console.warn('AI Email Assistant: btC row found but expected tds missing — skipping fallback to avoid hover bug');
+      return;
     }
   }
+
   
   // Strategy 2: Look for compose toolbar outside dC div
   if (!targetElement) {
@@ -195,198 +199,213 @@ function addAIButton(composeArea) {
       document.head.appendChild(overflowFixStyle);
     }
     // Create container for AI buttons - optimized for table cell placement
-    const aiContainer = document.createElement('div');
-    aiContainer.id = 'ai-email-container';
-    aiContainer.style.cssText = `
-      display: inline-flex;
-      gap: 2px;
-      align-items: center;
-      margin: 0;
-      flex-wrap: nowrap;
-      box-sizing: border-box;
-      position: relative;
-      overflow: visible;
-      contain: layout;
-      transform: none;
-      vertical-align: middle;
-    `;
-    
-    // Main AI button
-    aiButton = document.createElement('button');
-    aiButton.id = 'ai-email-button';
-    aiButton.innerHTML = '🤖 Generate AI Reply';
-    aiButton.style.cssText = `
-      background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-      box-shadow: none;
-      transition: background-color 0.2s ease, opacity 0.2s ease;
-      position: relative;
-      z-index: 1;
-      min-width: 120px;
-      max-width: 150px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      box-sizing: border-box;
-      transform: none;
-    `;
-    
-    // Dropdown button for more options
-    const dropdownButton = document.createElement('button');
-    dropdownButton.id = 'ai-options-button';
-    dropdownButton.innerHTML = '▼';
-    dropdownButton.style.cssText = `
-      background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
-      color: white;
-      border: none;
-      padding: 10px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 500;
-      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-      box-shadow: none;
-      transition: background-color 0.2s ease, opacity 0.2s ease;
-      position: relative;
-      z-index: 1;
-      box-sizing: border-box;
-      transform: none;
-    `;
-    
-    // Options menu
-    const optionsMenu = document.createElement('div');
-    optionsMenu.id = 'ai-options-menu';
-    optionsMenu.style.cssText = `
-      display: none;
-      position: absolute;
-      top: 100%;
-      right: 0;
-      background: white;
-      border: 1px solid #dadce0;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      z-index: 1001;
-      min-width: 180px;
-      max-width: 220px;
-      margin-top: 2px;
-      overflow: hidden;
-      box-sizing: border-box;
-    `;
-    
-    const options = [
-      { text: '🎯 Formal Response', tone: 'formal' },
-      { text: '💬 Casual Response', tone: 'casual' },
-      { text: '📝 Brief Response', tone: 'brief' },
-      { text: '📋 Detailed Response', tone: 'detailed' },
-      { text: '🤝 Diplomatic Response', tone: 'diplomatic' }
-    ];
-    
-    options.forEach(option => {
-      const optionItem = document.createElement('div');
-      optionItem.style.cssText = `
-        padding: 10px 12px;
+    function injectAIButtonUI(targetElement, composeArea) {
+      const aiContainer = document.createElement('div');
+      aiContainer.id = 'ai-email-container';
+      aiContainer.style.cssText = `
+        display: inline-flex;
+        gap: 2px;
+        align-items: center;
+        margin: 0;
+        flex-wrap: nowrap;
+        box-sizing: border-box;
+        position: relative;
+        overflow: visible;
+        contain: layout;
+        transform: none;
+        vertical-align: middle;
+      `;
+
+      // Main AI button
+      aiButton = document.createElement('button');
+      aiButton.id = 'ai-email-button';
+      aiButton.innerHTML = '🤖 Generate AI Reply';
+      aiButton.style.cssText = `
+        background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 4px;
         cursor: pointer;
-        border-bottom: 1px solid #f1f3f4;
         font-size: 13px;
+        font-weight: 500;
         font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-        transition: background-color 0.15s ease;
+        box-shadow: none;
+        transition: background-color 0.2s ease, opacity 0.2s ease;
+        position: relative;
+        z-index: 1;
+        min-width: 120px;
+        max-width: 150px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        box-sizing: border-box;
+        transform: none;
       `;
-      optionItem.textContent = option.text;
       
-      optionItem.addEventListener('mouseenter', () => {
-        optionItem.style.backgroundColor = '#f5f5f5';
-      });
+      // Dropdown button for more options
+      const dropdownButton = document.createElement('button');
+      dropdownButton.id = 'ai-options-button';
+      dropdownButton.innerHTML = '▼';
+      dropdownButton.style.cssText = `
+        background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+        color: white;
+        border: none;
+        padding: 10px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 500;
+        font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+        box-shadow: none;
+        transition: background-color 0.2s ease, opacity 0.2s ease;
+        position: relative;
+        z-index: 1;
+        box-sizing: border-box;
+        transform: none;
+      `;
       
-      optionItem.addEventListener('mouseleave', () => {
-        optionItem.style.backgroundColor = 'white';
-      });
+      // Options menu
+      const optionsMenu = document.createElement('div');
+      optionsMenu.id = 'ai-options-menu';
+      optionsMenu.style.cssText = `
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        border: 1px solid #dadce0;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 1001;
+        min-width: 180px;
+        max-width: 220px;
+        margin-top: 2px;
+        overflow: hidden;
+        box-sizing: border-box;
+      `;
       
-      optionItem.addEventListener('click', () => {
-        generateAIResponse(composeArea, option.tone);
-        optionsMenu.style.display = 'none';
-      });
+      const options = [
+        { text: '🎯 Formal Response', tone: 'formal' },
+        { text: '💬 Casual Response', tone: 'casual' },
+        { text: '📝 Brief Response', tone: 'brief' },
+        { text: '📋 Detailed Response', tone: 'detailed' },
+        { text: '🤝 Diplomatic Response', tone: 'diplomatic' }
+      ];
       
-      optionsMenu.appendChild(optionItem);
-    });
-    
-    aiContainer.appendChild(aiButton);
-    aiContainer.appendChild(dropdownButton);
-    aiContainer.appendChild(optionsMenu);
-    
-    // Add overflow-safe hover effects - only color and opacity changes
-    [aiButton, dropdownButton].forEach(btn => {
-      // Remove any problematic attributes that might cause overflow
-      btn.removeAttribute('data-tooltip');
-      btn.removeAttribute('aria-describedby');
-      
-      btn.addEventListener('mouseenter', (e) => {
-        // Prevent any default behavior that might cause overflow
-        e.preventDefault();
+      options.forEach(option => {
+        const optionItem = document.createElement('div');
+        optionItem.style.cssText = `
+          padding: 10px 12px;
+          cursor: pointer;
+          border-bottom: 1px solid #f1f3f4;
+          font-size: 13px;
+          font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+          transition: background-color 0.15s ease;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        `;
+        optionItem.textContent = option.text;
         
-        // Force safe styles
-        btn.style.transform = 'none';
-        btn.style.boxShadow = 'none';
-        btn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
-        btn.style.opacity = '0.9';
+        optionItem.addEventListener('mouseenter', () => {
+          optionItem.style.backgroundColor = '#f5f5f5';
+        });
+        
+        optionItem.addEventListener('mouseleave', () => {
+          optionItem.style.backgroundColor = 'white';
+        });
+        
+        optionItem.addEventListener('click', () => {
+          generateAIResponse(composeArea, option.tone);
+          optionsMenu.style.display = 'none';
+        });
+        
+        optionsMenu.appendChild(optionItem);
       });
       
-      btn.addEventListener('mouseleave', (e) => {
-        // Prevent any default behavior that might cause overflow
-        e.preventDefault();
+      aiContainer.appendChild(aiButton);
+      aiContainer.appendChild(dropdownButton);
+      aiContainer.appendChild(optionsMenu);
+      
+      // Add overflow-safe hover effects - only color and opacity changes
+      [aiButton, dropdownButton].forEach(btn => {
+        // Remove any problematic attributes that might cause overflow
+        btn.removeAttribute('data-tooltip');
+        btn.removeAttribute('aria-describedby');
         
-        // Reset to safe styles
-        btn.style.transform = 'none';
-        btn.style.boxShadow = 'none';
-        btn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-        btn.style.opacity = '1';
+        btn.addEventListener('mouseenter', (e) => {
+          // Prevent any default behavior that might cause overflow
+          e.preventDefault();
+          
+          // Force safe styles
+          btn.style.transform = 'none';
+          btn.style.boxShadow = 'none';
+          btn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
+          btn.style.opacity = '0.9';
+        });
+        
+        btn.addEventListener('mouseleave', (e) => {
+          // Prevent any default behavior that might cause overflow
+          e.preventDefault();
+          
+          // Reset to safe styles
+          btn.style.transform = 'none';
+          btn.style.boxShadow = 'none';
+          btn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+          btn.style.opacity = '1';
+        });
       });
-    });
-    
-    // Main button click
-    aiButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      generateAIResponse(composeArea);
-    });
-    
-    // Dropdown button click
-    dropdownButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const isVisible = optionsMenu.style.display === 'block';
-      optionsMenu.style.display = isVisible ? 'none' : 'block';
-    });
-    
-    // Close menu when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!aiContainer.contains(e.target)) {
-        optionsMenu.style.display = 'none';
-      }
-    });
-    
-    targetElement.appendChild(aiContainer);
-    
-    // Add a subtle animation to draw attention
-    aiContainer.animate([
-      { transform: 'scale(1)', opacity: '0.8' },
-      { transform: 'scale(1.05)', opacity: '1' },
-      { transform: 'scale(1)', opacity: '1' }
-    ], {
-      duration: 600,
-      easing: 'ease-out'
-    });
-    
-    console.log('AI Email Assistant: Button with options added successfully');
+      
+      // Main button click
+      aiButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        generateAIResponse(composeArea);
+      });
+      
+      // Dropdown button click
+      dropdownButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const isVisible = optionsMenu.style.display === 'block';
+        optionsMenu.style.display = isVisible ? 'none' : 'block';
+      });
+      
+      // Close menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!aiContainer.contains(e.target)) {
+          optionsMenu.style.display = 'none';
+        }
+      });
+      
+      targetElement.appendChild(aiContainer);
+      
+      // Add a subtle animation to draw attention
+      aiContainer.animate([
+        { transform: 'scale(1)', opacity: '0.8' },
+        { transform: 'scale(1.05)', opacity: '1' },
+        { transform: 'scale(1)', opacity: '1' }
+      ], {
+        duration: 600,
+        easing: 'ease-out'
+      });
+      
+      console.log('AI Email Assistant: Button with options added successfully');
+
+      targetElement.appendChild(aiContainer);
+
+      aiContainer.animate([
+        { transform: 'scale(1)', opacity: '0.8' },
+        { transform: 'scale(1.05)', opacity: '1' },
+        { transform: 'scale(1)', opacity: '1' }
+      ], {
+        duration: 600,
+        easing: 'ease-out'
+      });
+
+      console.log('AI Email Assistant: Button with options added successfully');
+    }
   }
 }
 
