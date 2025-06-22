@@ -493,15 +493,29 @@ function addAIButton(composeArea) {
     
     // Add hover effects to container instead of individual buttons
     aiContainer.addEventListener('mouseenter', () => {
-      aiButton.style.background = 'linear-gradient(135deg, #005a9e 0%, #004578 100%)';
-      dropdownButton.style.background = 'linear-gradient(135deg, #005a9e 0%, #004578 100%)';
+      const mainBtn = document.getElementById('ai-email-button-outlook');
+      const dropBtn = document.getElementById('ai-options-button-outlook');
+      
+      if (mainBtn) {
+        mainBtn.style.background = 'linear-gradient(135deg, #005a9e 0%, #004578 100%)';
+      }
+      if (dropBtn) {
+        dropBtn.style.background = 'linear-gradient(135deg, #005a9e 0%, #004578 100%)';
+      }
       aiContainer.style.transform = 'translateY(-1px)';
       aiContainer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
     });
     
     aiContainer.addEventListener('mouseleave', () => {
-      aiButton.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
-      dropdownButton.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+      const mainBtn = document.getElementById('ai-email-button-outlook');
+      const dropBtn = document.getElementById('ai-options-button-outlook');
+      
+      if (mainBtn) {
+        mainBtn.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+      }
+      if (dropBtn) {
+        dropBtn.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+      }
       aiContainer.style.transform = 'translateY(0)';
       aiContainer.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
     });
@@ -517,14 +531,21 @@ function addAIButton(composeArea) {
     dropdownButton.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const isVisible = optionsMenu.style.display === 'block';
-      optionsMenu.style.display = isVisible ? 'none' : 'block';
+      
+      const menu = document.getElementById('ai-options-menu-outlook');
+      if (menu) {
+        const isVisible = menu.style.display === 'block';
+        menu.style.display = isVisible ? 'none' : 'block';
+      }
     });
     
     // Close menu when clicking outside
     document.addEventListener('click', (e) => {
-      if (!aiContainer.contains(e.target)) {
-        optionsMenu.style.display = 'none';
+      const container = document.getElementById('ai-email-container-outlook');
+      const menu = document.getElementById('ai-options-menu-outlook');
+      
+      if (container && menu && !container.contains(e.target)) {
+        menu.style.display = 'none';
       }
     });
     
@@ -648,16 +669,18 @@ async function generateAIResponse(composeArea, tone = 'professional') {
         }
         
         setTimeout(() => {
-          buttonElement.innerHTML = '🤖 Generate AI Reply';
-          buttonElement.style.background = buttonElement.id.includes('emergency') ? 
-            'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)' :
-            'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
-          
-          if (dropdownBtn) {
-            dropdownBtn.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+          if (buttonElement && buttonElement.parentNode) {
+            buttonElement.innerHTML = '🤖 Generate AI Reply';
+            buttonElement.style.background = buttonElement.id.includes('emergency') ? 
+              'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)' :
+              'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+            buttonElement.style.pointerEvents = 'auto';
           }
           
-          buttonElement.style.pointerEvents = 'auto';
+          const dropdownBtnLater = document.getElementById('ai-options-button-outlook');
+          if (dropdownBtnLater) {
+            dropdownBtnLater.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+          }
         }, 2000);
       }
     } else {
@@ -666,11 +689,16 @@ async function generateAIResponse(composeArea, tone = 'professional') {
   } catch (error) {
     handleExtensionError(error);
   } finally {
-    if (buttonElement) {
-      buttonElement.disabled = false;
-      buttonElement.style.pointerEvents = 'auto';
-      if (buttonElement.innerHTML === '🔄 Regenerate') {
-        buttonElement.innerHTML = '🤖 Generate AI Reply';
+    const currentButtonElement = aiButton || 
+                                document.getElementById('ai-email-button-outlook') ||
+                                document.getElementById('ai-floating-button-outlook') ||
+                                document.getElementById('ai-emergency-button-outlook');
+    
+    if (currentButtonElement) {
+      currentButtonElement.disabled = false;
+      currentButtonElement.style.pointerEvents = 'auto';
+      if (currentButtonElement.innerHTML === '🔄 Regenerate') {
+        currentButtonElement.innerHTML = '🤖 Generate AI Reply';
       }
     }
   }

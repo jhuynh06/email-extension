@@ -258,15 +258,29 @@ function addAIButton(composeArea) {
     
     // Add hover effects to container instead of individual buttons
     aiContainer.addEventListener('mouseenter', () => {
-      aiButton.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
-      dropdownButton.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
+      const mainBtn = document.getElementById('ai-email-button');
+      const dropBtn = document.getElementById('ai-options-button');
+      
+      if (mainBtn) {
+        mainBtn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
+      }
+      if (dropBtn) {
+        dropBtn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
+      }
       aiContainer.style.transform = 'translateY(-1px)';
       aiContainer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
     });
     
     aiContainer.addEventListener('mouseleave', () => {
-      aiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-      dropdownButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+      const mainBtn = document.getElementById('ai-email-button');
+      const dropBtn = document.getElementById('ai-options-button');
+      
+      if (mainBtn) {
+        mainBtn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+      }
+      if (dropBtn) {
+        dropBtn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+      }
       aiContainer.style.transform = 'translateY(0)';
       aiContainer.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
     });
@@ -282,14 +296,21 @@ function addAIButton(composeArea) {
     dropdownButton.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const isVisible = optionsMenu.style.display === 'block';
-      optionsMenu.style.display = isVisible ? 'none' : 'block';
+      
+      const menu = document.getElementById('ai-options-menu');
+      if (menu) {
+        const isVisible = menu.style.display === 'block';
+        menu.style.display = isVisible ? 'none' : 'block';
+      }
     });
     
     // Close menu when clicking outside
     document.addEventListener('click', (e) => {
-      if (!aiContainer.contains(e.target)) {
-        optionsMenu.style.display = 'none';
+      const container = document.getElementById('ai-email-container');
+      const menu = document.getElementById('ai-options-menu');
+      
+      if (container && menu && !container.contains(e.target)) {
+        menu.style.display = 'none';
       }
     });
     
@@ -311,8 +332,14 @@ function addAIButton(composeArea) {
 
 async function generateAIResponse(composeArea, tone = 'professional') {
   try {
-    aiButton.disabled = true;
-    aiButton.innerHTML = '🔄 Regenerate';
+    if (!aiButton) {
+      aiButton = document.getElementById('ai-email-button');
+    }
+    
+    if (aiButton) {
+      aiButton.disabled = true;
+      aiButton.innerHTML = '🔄 Regenerate';
+    }
     
     const emailChain = extractEmailChain();
     const attachments = extractAttachments();
@@ -338,14 +365,29 @@ async function generateAIResponse(composeArea, tone = 'professional') {
       composeArea.focus();
       
       // Show success feedback
-      aiButton.innerHTML = '✅ Generated!';
-      aiButton.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
-      dropdownButton.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
+      const dropBtn = document.getElementById('ai-options-button');
+      
+      if (aiButton) {
+        aiButton.innerHTML = '✅ Generated!';
+        aiButton.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
+      }
+      
+      if (dropBtn) {
+        dropBtn.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
+      }
       
       setTimeout(() => {
-        aiButton.innerHTML = '🤖 Generate AI Reply';
-        aiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-        dropdownButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+        const currentAiButton = document.getElementById('ai-email-button');
+        const currentDropBtn = document.getElementById('ai-options-button');
+        
+        if (currentAiButton) {
+          currentAiButton.innerHTML = '🤖 Generate AI Reply';
+          currentAiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+        }
+        
+        if (currentDropBtn) {
+          currentDropBtn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+        }
       }, 2000);
     } else {
       alert('Error generating response: ' + response.error);
@@ -353,9 +395,11 @@ async function generateAIResponse(composeArea, tone = 'professional') {
   } catch (error) {
     handleExtensionError(error);
   } finally {
-    aiButton.disabled = false;
-    if (aiButton.innerHTML === '🔄 Regenerate') {
-      aiButton.innerHTML = '🤖 Generate AI Reply';
+    if (aiButton) {
+      aiButton.disabled = false;
+      if (aiButton.innerHTML === '🔄 Regenerate') {
+        aiButton.innerHTML = '🤖 Generate AI Reply';
+      }
     }
   }
 }
