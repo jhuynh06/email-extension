@@ -1,0 +1,174 @@
+/* Global CSS isolation fixes for AI Email Assistant */
+/* This prevents email client CSS from interfering with extension elements */
+
+/* Container isolation using advanced CSS containment */
+#ai-email-container,
+#ai-email-container-outlook {
+  contain: content !important;
+  isolation: isolate !important;
+  transform: translateZ(0) !important;
+  will-change: auto !important;
+  position: relative !important;
+  z-index: auto !important;
+  
+  /* CSS reset for container */
+  all: initial !important;
+  
+  /* Rebuild only essential styles */
+  display: inline-flex !important;
+  gap: 4px !important;
+  align-items: center !important;
+  margin: 4px !important;
+  flex-wrap: nowrap !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+}
+
+/* Button isolation with layout and paint containment */
+#ai-email-button,
+#ai-options-button,
+#ai-email-button-outlook,
+#ai-options-button-outlook {
+  contain: layout paint !important;
+  isolation: isolate !important;
+  transform: translateZ(0) !important;
+  will-change: auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+  
+  /* CSS reset for buttons */
+  all: initial !important;
+  
+  /* Rebuild button styles */
+  display: inline-block !important;
+  color: white !important;
+  border: none !important;
+  padding: 10px 16px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+  transition: background-color 0.2s ease, opacity 0.2s ease !important;
+  min-width: 120px !important;
+  max-width: 150px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  line-height: 1.2 !important;
+  user-select: none !important;
+}
+
+/* Gmail-specific button styling */
+#ai-email-button,
+#ai-options-button {
+  background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%) !important;
+}
+
+#ai-email-button:hover,
+#ai-options-button:hover {
+  background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%) !important;
+  opacity: 0.9 !important;
+}
+
+/* Outlook-specific button styling */
+#ai-email-button-outlook,
+#ai-options-button-outlook {
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%) !important;
+  font-weight: 600 !important;
+}
+
+#ai-email-button-outlook:hover,
+#ai-options-button-outlook:hover {
+  background: linear-gradient(135deg, #005a9e 0%, #004578 100%) !important;
+  opacity: 0.9 !important;
+}
+
+/* Dropdown button adjustments */
+#ai-options-button,
+#ai-options-button-outlook {
+  padding: 10px 8px !important;
+  font-size: 11px !important;
+  min-width: auto !important;
+  max-width: auto !important;
+}
+
+/* Menu isolation */
+#ai-options-menu,
+#ai-options-menu-outlook {
+  contain: layout !important;
+  isolation: isolate !important;
+  position: absolute !important;
+  z-index: 999999 !important;
+  transform: translateZ(0) !important;
+  will-change: auto !important;
+}
+
+/* Prevent pseudo-elements from interfering */
+#ai-email-container::before, #ai-email-container::after,
+#ai-email-container-outlook::before, #ai-email-container-outlook::after,
+#ai-email-button::before, #ai-email-button::after,
+#ai-options-button::before, #ai-options-button::after,
+#ai-email-button-outlook::before, #ai-email-button-outlook::after,
+#ai-options-button-outlook::before, #ai-options-button-outlook::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Aggressive style reset for all extension children */
+#ai-email-container *,
+#ai-email-container-outlook * {
+  all: unset !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  color: inherit !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-decoration: none !important;
+  vertical-align: baseline !important;
+  transform: none !important;
+  animation: none !important;
+  transition: background-color 0.2s ease, opacity 0.2s ease !important;
+}
+
+/* Ensure buttons maintain their essential properties after reset */
+#ai-email-container button,
+#ai-email-container-outlook button {
+  display: inline-block !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  text-align: center !important;
+}
+
+/* Force hardware acceleration for smooth performance */
+#ai-email-container,
+#ai-email-container-outlook,
+#ai-email-button,
+#ai-options-button,
+#ai-email-button-outlook,
+#ai-options-button-outlook {
+  backface-visibility: hidden !important;
+  perspective: 1000px !important;
+  transform-style: preserve-3d !important;
+}
+
+/* Prevent any layout shifts */
+#ai-email-container,
+#ai-email-container-outlook {
+  contain: strict !important;
+}
+
+#ai-email-button,
+#ai-options-button,
+#ai-email-button-outlook,
+#ai-options-button-outlook {
+  contain: layout paint style !important;
+}

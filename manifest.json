@@ -42,7 +42,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*.png"],
+      "resources": ["icons/*.png", "global-isolation.css", "default-prompts.json"],
       "matches": ["<all_urls>"]
     }
   ]

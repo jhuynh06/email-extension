@@ -123,103 +123,143 @@ function addAIButton(composeArea) {
   }
   
   if (targetElement) {
-    // Inject CSS to prevent overflow issues globally
-    const overflowFixStyle = document.createElement('style');
-    overflowFixStyle.textContent = `
-      #ai-email-button, #ai-options-button {
-        transform: none !important;
-        box-shadow: none !important;
-        overflow: hidden !important;
+    // Inject advanced CSS containment and isolation fixes
+    const advancedFixStyle = document.createElement('style');
+    advancedFixStyle.textContent = `
+      /* Advanced CSS containment and stacking context isolation */
+      #ai-email-container {
+        contain: content !important;
+        isolation: isolate !important;
+        transform: translateZ(0) !important;
+        position: relative !important;
+        z-index: auto !important;
+        will-change: auto !important;
+        all: initial !important;
+        /* Rebuild essential container styles */
+        display: inline-flex !important;
+        gap: 4px !important;
+        align-items: center !important;
+        margin: 4px !important;
+        flex-wrap: nowrap !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
+        overflow: visible !important;
+      }
+      
+      #ai-email-button, #ai-options-button {
+        contain: layout paint !important;
+        isolation: isolate !important;
+        transform: translateZ(0) !important;
+        position: relative !important;
+        z-index: 1 !important;
+        will-change: auto !important;
+        all: initial !important;
+        /* Rebuild essential button styles */
+        display: inline-block !important;
+        background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%) !important;
+        color: white !important;
+        border: none !important;
+        padding: 10px 16px !important;
+        border-radius: 4px !important;
+        cursor: pointer !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif !important;
+        transition: background-color 0.2s ease, opacity 0.2s ease !important;
+        min-width: 120px !important;
+        max-width: 150px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        box-sizing: border-box !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        line-height: 1.2 !important;
+      }
+      
+      #ai-options-button {
+        padding: 10px 8px !important;
+        font-size: 11px !important;
+        min-width: auto !important;
+        max-width: auto !important;
       }
       
       #ai-email-button:hover, #ai-options-button:hover {
-        transform: none !important;
+        contain: layout paint !important;
+        transform: translateZ(0) !important;
+        background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%) !important;
+        opacity: 0.9 !important;
         box-shadow: none !important;
+        border: none !important;
+        outline: none !important;
       }
       
+      #ai-options-menu {
+        contain: layout !important;
+        isolation: isolate !important;
+        position: absolute !important;
+        z-index: 999999 !important;
+        transform: translateZ(0) !important;
+        will-change: auto !important;
+      }
+      
+      /* Prevent any pseudo-elements that might cause issues */
       #ai-email-button::before, #ai-email-button::after,
-      #ai-options-button::before, #ai-options-button::after {
+      #ai-options-button::before, #ai-options-button::after,
+      #ai-email-container::before, #ai-email-container::after {
         display: none !important;
+        content: none !important;
       }
       
-      #ai-email-container {
-        overflow: visible;
-        contain: layout;
+      /* Global reset for any Gmail inherited styles */
+      #ai-email-container * {
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        outline: none !important;
+        text-decoration: none !important;
+        background: transparent !important;
+        color: inherit !important;
+        font: inherit !important;
+        vertical-align: baseline !important;
+        transform: none !important;
+        animation: none !important;
+        transition-delay: 0s !important;
+        transition-duration: 0.2s !important;
+        transition-property: background-color, opacity !important;
+        transition-timing-function: ease !important;
       }
     `;
     
-    if (!document.getElementById('ai-overflow-fix-styles')) {
-      overflowFixStyle.id = 'ai-overflow-fix-styles';
-      document.head.appendChild(overflowFixStyle);
+    if (!document.getElementById('ai-advanced-fix-styles')) {
+      advancedFixStyle.id = 'ai-advanced-fix-styles';
+      document.head.appendChild(advancedFixStyle);
     }
-    // Create container for AI buttons
+    
+    // Inject global isolation CSS as an additional safety layer
+    if (!document.getElementById('ai-global-isolation-styles')) {
+      const globalIsolationStyle = document.createElement('link');
+      globalIsolationStyle.id = 'ai-global-isolation-styles';
+      globalIsolationStyle.rel = 'stylesheet';
+      globalIsolationStyle.href = chrome.runtime.getURL('global-isolation.css');
+      document.head.appendChild(globalIsolationStyle);
+    }
+    // Create container for AI buttons (styles handled by CSS above)
     const aiContainer = document.createElement('div');
     aiContainer.id = 'ai-email-container';
-    aiContainer.style.cssText = `
-      display: inline-flex;
-      gap: 4px;
-      align-items: center;
-      margin: 4px;
-      flex-wrap: nowrap;
-      max-width: 100%;
-      box-sizing: border-box;
-      position: relative;
-      overflow: visible;
-      contain: layout;
-      transform: none;
-    `;
     
-    // Main AI button
+    // Main AI button (styles handled by CSS above)
     aiButton = document.createElement('button');
     aiButton.id = 'ai-email-button';
     aiButton.innerHTML = '🤖 Generate AI Reply';
-    aiButton.style.cssText = `
-      background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-      box-shadow: none;
-      transition: background-color 0.2s ease, opacity 0.2s ease;
-      position: relative;
-      z-index: 1;
-      min-width: 120px;
-      max-width: 150px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      box-sizing: border-box;
-      transform: none;
-    `;
     
-    // Dropdown button for more options
+    // Dropdown button for more options (styles handled by CSS above)
     const dropdownButton = document.createElement('button');
     dropdownButton.id = 'ai-options-button';
     dropdownButton.innerHTML = '▼';
-    dropdownButton.style.cssText = `
-      background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
-      color: white;
-      border: none;
-      padding: 10px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 500;
-      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-      box-shadow: none;
-      transition: background-color 0.2s ease, opacity 0.2s ease;
-      position: relative;
-      z-index: 1;
-      box-sizing: border-box;
-      transform: none;
-    `;
     
-    // Options menu
+    // Options menu (base styles handled by CSS above)
     const optionsMenu = document.createElement('div');
     optionsMenu.id = 'ai-options-menu';
     optionsMenu.style.cssText = `
@@ -231,7 +271,6 @@ function addAIButton(composeArea) {
       border: 1px solid #dadce0;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      z-index: 1001;
       min-width: 180px;
       max-width: 220px;
       margin-top: 2px;
@@ -282,33 +321,33 @@ function addAIButton(composeArea) {
     aiContainer.appendChild(dropdownButton);
     aiContainer.appendChild(optionsMenu);
     
-    // Add overflow-safe hover effects - only color and opacity changes
+    // Advanced event isolation to prevent conflicts
     [aiButton, dropdownButton].forEach(btn => {
       // Remove any problematic attributes that might cause overflow
       btn.removeAttribute('data-tooltip');
       btn.removeAttribute('aria-describedby');
+      btn.removeAttribute('title');
       
+      // Add event isolation using capture phase
       btn.addEventListener('mouseenter', (e) => {
-        // Prevent any default behavior that might cause overflow
-        e.preventDefault();
-        
-        // Force safe styles
-        btn.style.transform = 'none';
-        btn.style.boxShadow = 'none';
-        btn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
-        btn.style.opacity = '0.9';
-      });
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }, true);
       
       btn.addEventListener('mouseleave', (e) => {
-        // Prevent any default behavior that might cause overflow
-        e.preventDefault();
-        
-        // Reset to safe styles
-        btn.style.transform = 'none';
-        btn.style.boxShadow = 'none';
-        btn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-        btn.style.opacity = '1';
-      });
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }, true);
+      
+      btn.addEventListener('mouseover', (e) => {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }, true);
+      
+      btn.addEventListener('mouseout', (e) => {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }, true);
     });
     
     // Main button click
