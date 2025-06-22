@@ -244,9 +244,14 @@ function addAIButton(composeArea) {
         optionItem.style.color = '#202124';
       });
       
-      optionItem.addEventListener('click', () => {
+      optionItem.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         generateAIResponse(composeArea, option.tone);
-        optionsMenu.style.display = 'none';
+        const menu = document.getElementById('ai-options-menu');
+        if (menu) {
+          menu.style.display = 'none';
+        }
       });
       
       optionsMenu.appendChild(optionItem);
@@ -256,7 +261,7 @@ function addAIButton(composeArea) {
     aiContainer.appendChild(dropdownButton);
     aiContainer.appendChild(optionsMenu);
     
-    // Add hover effects to container instead of individual buttons
+    // Add hover effects to container - only color changes to prevent overflow
     aiContainer.addEventListener('mouseenter', () => {
       const mainBtn = document.getElementById('ai-email-button');
       const dropBtn = document.getElementById('ai-options-button');
@@ -267,8 +272,6 @@ function addAIButton(composeArea) {
       if (dropBtn) {
         dropBtn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
       }
-      aiContainer.style.transform = 'translateY(-1px)';
-      aiContainer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
     });
     
     aiContainer.addEventListener('mouseleave', () => {
@@ -281,8 +284,6 @@ function addAIButton(composeArea) {
       if (dropBtn) {
         dropBtn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
       }
-      aiContainer.style.transform = 'translateY(0)';
-      aiContainer.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
     });
     
     // Main button click
@@ -331,6 +332,7 @@ function addAIButton(composeArea) {
 }
 
 async function generateAIResponse(composeArea, tone = 'professional') {
+  let success = false;
   try {
     if (!aiButton) {
       aiButton = document.getElementById('ai-email-button');
@@ -361,34 +363,21 @@ async function generateAIResponse(composeArea, tone = 'professional') {
     });
     
     if (response.success) {
+      success = true;
       composeArea.innerHTML = response.data;
       composeArea.focus();
       
-      // Show success feedback
-      const dropBtn = document.getElementById('ai-options-button');
-      
+      // Success - keep button as Regenerate
       if (aiButton) {
-        aiButton.innerHTML = '✅ Generated!';
-        aiButton.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
+        // Keep the Regenerate text, no flashing
+        aiButton.innerHTML = '🔄 Regenerate';
+        aiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
       }
       
+      const dropBtn = document.getElementById('ai-options-button');
       if (dropBtn) {
-        dropBtn.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
+        dropBtn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
       }
-      
-      setTimeout(() => {
-        const currentAiButton = document.getElementById('ai-email-button');
-        const currentDropBtn = document.getElementById('ai-options-button');
-        
-        if (currentAiButton) {
-          currentAiButton.innerHTML = '🤖 Generate AI Reply';
-          currentAiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-        }
-        
-        if (currentDropBtn) {
-          currentDropBtn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-        }
-      }, 2000);
     } else {
       alert('Error generating response: ' + response.error);
     }
@@ -397,7 +386,8 @@ async function generateAIResponse(composeArea, tone = 'professional') {
   } finally {
     if (aiButton) {
       aiButton.disabled = false;
-      if (aiButton.innerHTML === '🔄 Regenerate') {
+      // Reset to Generate AI Reply only if there was an error
+      if (!success && aiButton.innerHTML === '🔄 Regenerate') {
         aiButton.innerHTML = '🤖 Generate AI Reply';
       }
     }
