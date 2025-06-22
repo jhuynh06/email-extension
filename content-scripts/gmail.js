@@ -123,6 +123,36 @@ function addAIButton(composeArea) {
   }
   
   if (targetElement) {
+    // Inject CSS to prevent overflow issues globally
+    const overflowFixStyle = document.createElement('style');
+    overflowFixStyle.textContent = `
+      #ai-email-button, #ai-options-button {
+        transform: none !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+      }
+      
+      #ai-email-button:hover, #ai-options-button:hover {
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      
+      #ai-email-button::before, #ai-email-button::after,
+      #ai-options-button::before, #ai-options-button::after {
+        display: none !important;
+      }
+      
+      #ai-email-container {
+        overflow: visible;
+        contain: layout;
+      }
+    `;
+    
+    if (!document.getElementById('ai-overflow-fix-styles')) {
+      overflowFixStyle.id = 'ai-overflow-fix-styles';
+      document.head.appendChild(overflowFixStyle);
+    }
     // Create container for AI buttons
     const aiContainer = document.createElement('div');
     aiContainer.id = 'ai-email-container';
@@ -135,6 +165,9 @@ function addAIButton(composeArea) {
       max-width: 100%;
       box-sizing: border-box;
       position: relative;
+      overflow: visible;
+      contain: layout;
+      transform: none;
     `;
     
     // Main AI button
@@ -151,16 +184,17 @@ function addAIButton(composeArea) {
       font-size: 13px;
       font-weight: 500;
       font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-      transition: all 0.2s ease;
+      box-shadow: none;
+      transition: background-color 0.2s ease, opacity 0.2s ease;
       position: relative;
-      z-index: 1000;
+      z-index: 1;
       min-width: 120px;
       max-width: 150px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       box-sizing: border-box;
+      transform: none;
     `;
     
     // Dropdown button for more options
@@ -177,11 +211,12 @@ function addAIButton(composeArea) {
       font-size: 11px;
       font-weight: 500;
       font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-      transition: all 0.2s ease;
+      box-shadow: none;
+      transition: background-color 0.2s ease, opacity 0.2s ease;
       position: relative;
-      z-index: 1000;
+      z-index: 1;
       box-sizing: border-box;
+      transform: none;
     `;
     
     // Options menu
@@ -247,18 +282,32 @@ function addAIButton(composeArea) {
     aiContainer.appendChild(dropdownButton);
     aiContainer.appendChild(optionsMenu);
     
-    // Add hover effects
+    // Add overflow-safe hover effects - only color and opacity changes
     [aiButton, dropdownButton].forEach(btn => {
-      btn.addEventListener('mouseenter', () => {
+      // Remove any problematic attributes that might cause overflow
+      btn.removeAttribute('data-tooltip');
+      btn.removeAttribute('aria-describedby');
+      
+      btn.addEventListener('mouseenter', (e) => {
+        // Prevent any default behavior that might cause overflow
+        e.preventDefault();
+        
+        // Force safe styles
+        btn.style.transform = 'none';
+        btn.style.boxShadow = 'none';
         btn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
-        btn.style.transform = 'translateY(-1px)';
-        btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+        btn.style.opacity = '0.9';
       });
       
-      btn.addEventListener('mouseleave', () => {
+      btn.addEventListener('mouseleave', (e) => {
+        // Prevent any default behavior that might cause overflow
+        e.preventDefault();
+        
+        // Reset to safe styles
+        btn.style.transform = 'none';
+        btn.style.boxShadow = 'none';
         btn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-        btn.style.transform = 'translateY(0)';
-        btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
+        btn.style.opacity = '1';
       });
     });
     
