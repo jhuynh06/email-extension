@@ -731,3 +731,22 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+(function patchGmailStyles() {
+  const patchStyle = document.createElement('style');
+  patchStyle.id = 'ai-gmail-style-patch';
+  patchStyle.textContent = `
+    div.dC:hover {
+      outline: none !important;
+      box-shadow: none !important;
+      background-color: transparent !important;
+    }
+
+    div.dC {
+      outline: none !important;
+      box-shadow: none !important;
+      background-color: transparent !important;
+    }
+  `;
+  document.head.appendChild(patchStyle);
+})();
