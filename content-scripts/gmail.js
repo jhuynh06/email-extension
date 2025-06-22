@@ -128,16 +128,13 @@ function addAIButton(composeArea) {
     aiContainer.id = 'ai-email-container';
     aiContainer.style.cssText = `
       display: inline-flex;
+      gap: 4px;
       align-items: center;
       margin: 4px;
       flex-wrap: nowrap;
-      max-width: fit-content;
+      max-width: 100%;
       box-sizing: border-box;
       position: relative;
-      height: 36px;
-      border-radius: 4px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     `;
     
     // Main AI button
@@ -148,43 +145,42 @@ function addAIButton(composeArea) {
       background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
       color: white;
       border: none;
-      padding: 0 16px;
-      border-radius: 4px 0 0 4px;
+      padding: 10px 16px;
+      border-radius: 4px;
       cursor: pointer;
       font-size: 13px;
       font-weight: 500;
       font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
       transition: all 0.2s ease;
       position: relative;
       z-index: 1000;
-      height: 36px;
-      min-width: 140px;
+      min-width: 120px;
+      max-width: 150px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       box-sizing: border-box;
-      border-right: 1px solid rgba(255,255,255,0.2);
     `;
     
     // Dropdown button for more options
     const dropdownButton = document.createElement('button');
     dropdownButton.id = 'ai-options-button';
-    dropdownButton.innerHTML = '▲';
+    dropdownButton.innerHTML = '▼';
     dropdownButton.style.cssText = `
       background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
       color: white;
       border: none;
-      padding: 0 10px;
-      border-radius: 0 4px 4px 0;
+      padding: 10px 8px;
+      border-radius: 4px;
       cursor: pointer;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 500;
       font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
       transition: all 0.2s ease;
       position: relative;
       z-index: 1000;
-      height: 36px;
-      width: 36px;
       box-sizing: border-box;
     `;
     
@@ -194,18 +190,18 @@ function addAIButton(composeArea) {
     optionsMenu.style.cssText = `
       display: none;
       position: absolute;
-      bottom: 100%;
+      top: 100%;
       right: 0;
       background: white;
       border: 1px solid #dadce0;
-      border-radius: 12px;
-      box-shadow: 0 8px 28px rgba(0,0,0,0.28), 0 0 8px rgba(0,0,0,0.12);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
       z-index: 1001;
-      min-width: 200px;
-      margin-bottom: 8px;
+      min-width: 180px;
+      max-width: 220px;
+      margin-top: 2px;
       overflow: hidden;
       box-sizing: border-box;
-      backdrop-filter: blur(8px);
     `;
     
     const options = [
@@ -216,42 +212,32 @@ function addAIButton(composeArea) {
       { text: '🤝 Diplomatic Response', tone: 'diplomatic' }
     ];
     
-    options.forEach((option, index) => {
+    options.forEach(option => {
       const optionItem = document.createElement('div');
       optionItem.style.cssText = `
-        padding: 12px 16px;
+        padding: 10px 12px;
         cursor: pointer;
-        ${index < options.length - 1 ? 'border-bottom: 1px solid #f1f3f4;' : ''}
+        border-bottom: 1px solid #f1f3f4;
         font-size: 13px;
         font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-        transition: all 0.15s ease;
+        transition: background-color 0.15s ease;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        display: flex;
-        align-items: center;
-        color: #202124;
       `;
       optionItem.textContent = option.text;
       
       optionItem.addEventListener('mouseenter', () => {
-        optionItem.style.backgroundColor = '#f8f9fa';
-        optionItem.style.color = '#1a73e8';
+        optionItem.style.backgroundColor = '#f5f5f5';
       });
       
       optionItem.addEventListener('mouseleave', () => {
-        optionItem.style.backgroundColor = 'transparent';
-        optionItem.style.color = '#202124';
+        optionItem.style.backgroundColor = 'white';
       });
       
-      optionItem.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      optionItem.addEventListener('click', () => {
         generateAIResponse(composeArea, option.tone);
-        const menu = document.getElementById('ai-options-menu');
-        if (menu) {
-          menu.style.display = 'none';
-        }
+        optionsMenu.style.display = 'none';
       });
       
       optionsMenu.appendChild(optionItem);
@@ -261,29 +247,19 @@ function addAIButton(composeArea) {
     aiContainer.appendChild(dropdownButton);
     aiContainer.appendChild(optionsMenu);
     
-    // Add hover effects to container - only color changes to prevent overflow
-    aiContainer.addEventListener('mouseenter', () => {
-      const mainBtn = document.getElementById('ai-email-button');
-      const dropBtn = document.getElementById('ai-options-button');
+    // Add hover effects
+    [aiButton, dropdownButton].forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        btn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
+        btn.style.transform = 'translateY(-1px)';
+        btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+      });
       
-      if (mainBtn) {
-        mainBtn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
-      }
-      if (dropBtn) {
-        dropBtn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
-      }
-    });
-    
-    aiContainer.addEventListener('mouseleave', () => {
-      const mainBtn = document.getElementById('ai-email-button');
-      const dropBtn = document.getElementById('ai-options-button');
-      
-      if (mainBtn) {
-        mainBtn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-      }
-      if (dropBtn) {
-        dropBtn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-      }
+      btn.addEventListener('mouseleave', () => {
+        btn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+        btn.style.transform = 'translateY(0)';
+        btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
+      });
     });
     
     // Main button click
@@ -297,21 +273,14 @@ function addAIButton(composeArea) {
     dropdownButton.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      
-      const menu = document.getElementById('ai-options-menu');
-      if (menu) {
-        const isVisible = menu.style.display === 'block';
-        menu.style.display = isVisible ? 'none' : 'block';
-      }
+      const isVisible = optionsMenu.style.display === 'block';
+      optionsMenu.style.display = isVisible ? 'none' : 'block';
     });
     
     // Close menu when clicking outside
     document.addEventListener('click', (e) => {
-      const container = document.getElementById('ai-email-container');
-      const menu = document.getElementById('ai-options-menu');
-      
-      if (container && menu && !container.contains(e.target)) {
-        menu.style.display = 'none';
+      if (!aiContainer.contains(e.target)) {
+        optionsMenu.style.display = 'none';
       }
     });
     
@@ -332,16 +301,9 @@ function addAIButton(composeArea) {
 }
 
 async function generateAIResponse(composeArea, tone = 'professional') {
-  let success = false;
   try {
-    if (!aiButton) {
-      aiButton = document.getElementById('ai-email-button');
-    }
-    
-    if (aiButton) {
-      aiButton.disabled = true;
-      aiButton.innerHTML = '🔄 Regenerate';
-    }
+    aiButton.disabled = true;
+    aiButton.innerHTML = '🔄 Generating...';
     
     const emailChain = extractEmailChain();
     const attachments = extractAttachments();
@@ -363,33 +325,27 @@ async function generateAIResponse(composeArea, tone = 'professional') {
     });
     
     if (response.success) {
-      success = true;
       composeArea.innerHTML = response.data;
       composeArea.focus();
       
-      // Success - keep button as Regenerate
-      if (aiButton) {
-        // Keep the Regenerate text, no flashing
-        aiButton.innerHTML = '🔄 Regenerate';
-        aiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-      }
+      // Show success feedback
+      const originalText = aiButton.innerHTML;
+      aiButton.innerHTML = '✅ Generated!';
+      aiButton.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
       
-      const dropBtn = document.getElementById('ai-options-button');
-      if (dropBtn) {
-        dropBtn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-      }
+      setTimeout(() => {
+        aiButton.innerHTML = originalText;
+        aiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+      }, 2000);
     } else {
       alert('Error generating response: ' + response.error);
     }
   } catch (error) {
     handleExtensionError(error);
   } finally {
-    if (aiButton) {
-      aiButton.disabled = false;
-      // Reset to Generate AI Reply only if there was an error
-      if (!success && aiButton.innerHTML === '🔄 Regenerate') {
-        aiButton.innerHTML = '🤖 Generate AI Reply';
-      }
+    aiButton.disabled = false;
+    if (aiButton.innerHTML === '🔄 Generating...') {
+      aiButton.innerHTML = '🤖 Generate AI Reply';
     }
   }
 }
