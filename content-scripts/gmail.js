@@ -168,36 +168,41 @@ function addAIButton(composeArea) {
   }
   
   if (targetElement) {
-    // Inject CSS to prevent overflow issues globally
-    const overflowFixStyle = document.createElement('style');
-    overflowFixStyle.textContent = `
-      #ai-email-button, #ai-options-button {
-        transform: none !important;
+    // Inject CSS to neutralize dC div hover effects
+    const dcFixStyle = document.createElement('style');
+    dcFixStyle.id = 'gmail-dc-hover-fix';
+    dcFixStyle.textContent = `
+      .dC {
+        outline: none !important;
         box-shadow: none !important;
-        overflow: hidden !important;
-        box-sizing: border-box !important;
+        background-color: transparent !important;
+        border: none !important;
       }
-      
-      #ai-email-button:hover, #ai-options-button:hover {
-        transform: none !important;
+      .dC:hover {
+        outline: none !important;
         box-shadow: none !important;
+        background-color: transparent !important;
+        border: none !important;
+        transform: none !important;
       }
-      
-      #ai-email-button::before, #ai-email-button::after,
-      #ai-options-button::before, #ai-options-button::after {
-        display: none !important;
+      .dC * {
+        outline: none !important;
+        box-shadow: none !important;
+        transform: none !important;
       }
-      
-      #ai-email-container {
-        overflow: visible;
-        contain: layout;
+      .dC *:hover {
+        outline: none !important;
+        box-shadow: none !important;
+        transform: none !important;
       }
     `;
     
-    if (!document.getElementById('ai-overflow-fix-styles')) {
-      overflowFixStyle.id = 'ai-overflow-fix-styles';
-      document.head.appendChild(overflowFixStyle);
+    // Only inject once
+    if (!document.getElementById('gmail-dc-hover-fix')) {
+      document.head.appendChild(dcFixStyle);
+      console.log('AI Email Assistant: Injected dC hover fix styles');
     }
+    
     // Create container for AI buttons - optimized for table cell placement
     function injectAIButtonUI(targetElement, composeArea) {
       const aiContainer = document.createElement('div');
@@ -215,16 +220,6 @@ function addAIButton(composeArea) {
         transform: none;
         vertical-align: middle;
       `;
-
-      const style = document.createElement('style');
-      style.textContent = `
-        .dC:hover {
-          outline: none !important;
-          box-shadow: none !important;
-          background-color: transparent !important;
-        }
-      `;
-      aiContainer.appendChild(style);
 
       // Main AI button
       aiButton = document.createElement('button');
@@ -403,17 +398,7 @@ function addAIButton(composeArea) {
       
       console.log('AI Email Assistant: Button with options added successfully');
 
-      targetElement.appendChild(aiContainer);
-
-      aiContainer.animate([
-        { transform: 'scale(1)', opacity: '0.8' },
-        { transform: 'scale(1.05)', opacity: '1' },
-        { transform: 'scale(1)', opacity: '1' }
-      ], {
-        duration: 600,
-        easing: 'ease-out'
-      });
-
+      
       console.log('AI Email Assistant: Button with options added successfully');
     }
   }
