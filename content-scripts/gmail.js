@@ -128,13 +128,16 @@ function addAIButton(composeArea) {
     aiContainer.id = 'ai-email-container';
     aiContainer.style.cssText = `
       display: inline-flex;
-      gap: 4px;
       align-items: center;
       margin: 4px;
       flex-wrap: nowrap;
-      max-width: 100%;
+      max-width: fit-content;
       box-sizing: border-box;
       position: relative;
+      height: 36px;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     `;
     
     // Main AI button
@@ -145,42 +148,43 @@ function addAIButton(composeArea) {
       background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
       color: white;
       border: none;
-      padding: 10px 16px;
-      border-radius: 4px;
+      padding: 0 16px;
+      border-radius: 4px 0 0 4px;
       cursor: pointer;
       font-size: 13px;
       font-weight: 500;
       font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
       transition: all 0.2s ease;
       position: relative;
       z-index: 1000;
-      min-width: 120px;
-      max-width: 150px;
+      height: 36px;
+      min-width: 140px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       box-sizing: border-box;
+      border-right: 1px solid rgba(255,255,255,0.2);
     `;
     
     // Dropdown button for more options
     const dropdownButton = document.createElement('button');
     dropdownButton.id = 'ai-options-button';
-    dropdownButton.innerHTML = '▼';
+    dropdownButton.innerHTML = '▲';
     dropdownButton.style.cssText = `
       background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
       color: white;
       border: none;
-      padding: 10px 8px;
-      border-radius: 4px;
+      padding: 0 10px;
+      border-radius: 0 4px 4px 0;
       cursor: pointer;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 500;
       font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
       transition: all 0.2s ease;
       position: relative;
       z-index: 1000;
+      height: 36px;
+      width: 36px;
       box-sizing: border-box;
     `;
     
@@ -190,18 +194,18 @@ function addAIButton(composeArea) {
     optionsMenu.style.cssText = `
       display: none;
       position: absolute;
-      top: 100%;
+      bottom: 100%;
       right: 0;
       background: white;
       border: 1px solid #dadce0;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      border-radius: 12px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.28), 0 0 8px rgba(0,0,0,0.12);
       z-index: 1001;
-      min-width: 180px;
-      max-width: 220px;
-      margin-top: 2px;
+      min-width: 200px;
+      margin-bottom: 8px;
       overflow: hidden;
       box-sizing: border-box;
+      backdrop-filter: blur(8px);
     `;
     
     const options = [
@@ -212,27 +216,32 @@ function addAIButton(composeArea) {
       { text: '🤝 Diplomatic Response', tone: 'diplomatic' }
     ];
     
-    options.forEach(option => {
+    options.forEach((option, index) => {
       const optionItem = document.createElement('div');
       optionItem.style.cssText = `
-        padding: 10px 12px;
+        padding: 12px 16px;
         cursor: pointer;
-        border-bottom: 1px solid #f1f3f4;
+        ${index < options.length - 1 ? 'border-bottom: 1px solid #f1f3f4;' : ''}
         font-size: 13px;
         font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-        transition: background-color 0.15s ease;
+        transition: all 0.15s ease;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        display: flex;
+        align-items: center;
+        color: #202124;
       `;
       optionItem.textContent = option.text;
       
       optionItem.addEventListener('mouseenter', () => {
-        optionItem.style.backgroundColor = '#f5f5f5';
+        optionItem.style.backgroundColor = '#f8f9fa';
+        optionItem.style.color = '#1a73e8';
       });
       
       optionItem.addEventListener('mouseleave', () => {
-        optionItem.style.backgroundColor = 'white';
+        optionItem.style.backgroundColor = 'transparent';
+        optionItem.style.color = '#202124';
       });
       
       optionItem.addEventListener('click', () => {
@@ -247,19 +256,19 @@ function addAIButton(composeArea) {
     aiContainer.appendChild(dropdownButton);
     aiContainer.appendChild(optionsMenu);
     
-    // Add hover effects
-    [aiButton, dropdownButton].forEach(btn => {
-      btn.addEventListener('mouseenter', () => {
-        btn.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
-        btn.style.transform = 'translateY(-1px)';
-        btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
-      });
-      
-      btn.addEventListener('mouseleave', () => {
-        btn.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
-        btn.style.transform = 'translateY(0)';
-        btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
-      });
+    // Add hover effects to container instead of individual buttons
+    aiContainer.addEventListener('mouseenter', () => {
+      aiButton.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
+      dropdownButton.style.background = 'linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)';
+      aiContainer.style.transform = 'translateY(-1px)';
+      aiContainer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+    });
+    
+    aiContainer.addEventListener('mouseleave', () => {
+      aiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+      dropdownButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+      aiContainer.style.transform = 'translateY(0)';
+      aiContainer.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
     });
     
     // Main button click
@@ -303,7 +312,7 @@ function addAIButton(composeArea) {
 async function generateAIResponse(composeArea, tone = 'professional') {
   try {
     aiButton.disabled = true;
-    aiButton.innerHTML = '🔄 Generating...';
+    aiButton.innerHTML = '🔄 Regenerate';
     
     const emailChain = extractEmailChain();
     const attachments = extractAttachments();
@@ -329,13 +338,14 @@ async function generateAIResponse(composeArea, tone = 'professional') {
       composeArea.focus();
       
       // Show success feedback
-      const originalText = aiButton.innerHTML;
       aiButton.innerHTML = '✅ Generated!';
       aiButton.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
+      dropdownButton.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
       
       setTimeout(() => {
-        aiButton.innerHTML = originalText;
+        aiButton.innerHTML = '🤖 Generate AI Reply';
         aiButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
+        dropdownButton.style.background = 'linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)';
       }, 2000);
     } else {
       alert('Error generating response: ' + response.error);
@@ -344,7 +354,7 @@ async function generateAIResponse(composeArea, tone = 'professional') {
     handleExtensionError(error);
   } finally {
     aiButton.disabled = false;
-    if (aiButton.innerHTML === '🔄 Generating...') {
+    if (aiButton.innerHTML === '🔄 Regenerate') {
       aiButton.innerHTML = '🤖 Generate AI Reply';
     }
   }
