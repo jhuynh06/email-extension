@@ -216,6 +216,16 @@ function addAIButton(composeArea) {
         vertical-align: middle;
       `;
 
+      const style = document.createElement('style');
+      style.textContent = `
+        .dC:hover {
+          outline: none !important;
+          box-shadow: none !important;
+          background-color: transparent !important;
+        }
+      `;
+      aiContainer.appendChild(style);
+
       // Main AI button
       aiButton = document.createElement('button');
       aiButton.id = 'ai-email-button';
@@ -732,21 +742,3 @@ if (document.readyState === 'loading') {
   init();
 }
 
-(function patchGmailStyles() {
-  const patchStyle = document.createElement('style');
-  patchStyle.id = 'ai-gmail-style-patch';
-  patchStyle.textContent = `
-    div.dC:hover {
-      outline: none !important;
-      box-shadow: none !important;
-      background-color: transparent !important;
-    }
-
-    div.dC {
-      outline: none !important;
-      box-shadow: none !important;
-      background-color: transparent !important;
-    }
-  `;
-  document.head.appendChild(patchStyle);
-})();
