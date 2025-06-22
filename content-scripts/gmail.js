@@ -66,60 +66,101 @@ function addAIButton(composeArea) {
     return; // Button already exists
   }
 
-  // Try multiple placement strategies
+  // Find Gmail's specific table structure to avoid dC div conflicts
   let targetElement = null;
   
-  // Strategy 1: Find toolbar near compose area
-  const toolbar = composeArea.closest('div').querySelector('div[role="toolbar"]') ||
-                 composeArea.parentElement.querySelector('div[data-tooltip*="Send"]')?.parentElement ||
-                 composeArea.closest('div').querySelector('div[data-tooltip*="Send"]')?.parentElement;
+  // Strategy 1: Find the btC tr element and look for gU Up td
+  const btcRow = document.querySelector('tr.btC');
+  if (btcRow) {
+    const guUpTd = btcRow.querySelector('td.gU.Up');
+    const ocGuTd = btcRow.querySelector('td.oc.gU');
+    
+    if (guUpTd && ocGuTd) {
+      // Create a new td element to insert between gU Up and oc gU
+      const aiTd = document.createElement('td');
+      aiTd.className = 'gU ai-button-cell';
+      aiTd.style.cssText = `
+        vertical-align: middle;
+        padding: 0 4px;
+        white-space: nowrap;
+      `;
+      
+      // Insert the new td after gU Up and before oc gU
+      btcRow.insertBefore(aiTd, ocGuTd);
+      targetElement = aiTd;
+      console.log('AI Email Assistant: Placed button in btC row between gU Up and oc gU');
+    }
+  }
   
-  // Strategy 2: Find send button and place near it
-  const sendButton = document.querySelector('div[data-tooltip*="Send"]') ||
-                    document.querySelector('div[role="button"][aria-label*="Send"]') ||
-                    document.querySelector('div[data-tooltip="Send ⌘+Enter"]');
+  // Strategy 2: Look for compose toolbar outside dC div
+  if (!targetElement) {
+    const composeForm = composeArea.closest('div[role="dialog"]') || composeArea.closest('form');
+    if (composeForm) {
+      // Look for table with btC class
+      const btcTable = composeForm.querySelector('table');
+      if (btcTable) {
+        const existingRow = btcTable.querySelector('tr.btC');
+        if (existingRow) {
+          // Create new td at the end of existing row
+          const aiTd = document.createElement('td');
+          aiTd.className = 'gU ai-button-cell';
+          aiTd.style.cssText = `
+            vertical-align: middle;
+            padding: 0 4px;
+            white-space: nowrap;
+          `;
+          existingRow.appendChild(aiTd);
+          targetElement = aiTd;
+          console.log('AI Email Assistant: Added button to end of btC row');
+        }
+      }
+    }
+  }
   
-  // Strategy 3: Find compose window bottom area
-  const composeWindow = composeArea.closest('div[role="dialog"]') ||
-                       composeArea.closest('div.T-I-J3');
+  // Strategy 3: Create our own row in the table structure
+  if (!targetElement) {
+    const composeForm = composeArea.closest('div[role="dialog"]') || composeArea.closest('form');
+    if (composeForm) {
+      const table = composeForm.querySelector('table') || composeForm.querySelector('tbody')?.parentElement;
+      if (table) {
+        const newRow = document.createElement('tr');
+        newRow.className = 'ai-button-row';
+        
+        const aiTd = document.createElement('td');
+        aiTd.colSpan = 10; // Span multiple columns
+        aiTd.style.cssText = `
+          text-align: right;
+          padding: 4px 8px;
+          vertical-align: middle;
+        `;
+        
+        newRow.appendChild(aiTd);
+        table.appendChild(newRow);
+        targetElement = aiTd;
+        console.log('AI Email Assistant: Created new row in table structure');
+      }
+    }
+  }
   
-  if (toolbar) {
-    targetElement = toolbar;
-  } else if (sendButton && sendButton.parentElement) {
-    targetElement = sendButton.parentElement;
-  } else if (composeWindow) {
-    // Create our own toolbar area
-    const customToolbar = document.createElement('div');
-    customToolbar.style.cssText = `
-      padding: 6px 8px;
-      border-top: 1px solid #e8eaed;
-      background: #f8f9fa;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      max-width: 100%;
-      overflow: hidden;
-      box-sizing: border-box;
-    `;
-    composeWindow.appendChild(customToolbar);
-    targetElement = customToolbar;
-  } else {
-    // Fallback: Place relative to compose area
-    const fallbackContainer = document.createElement('div');
-    fallbackContainer.style.cssText = `
-      position: relative;
-      margin: 8px 0;
-      text-align: center;
-      padding: 8px;
-      background: #f8f9fa;
-      border-radius: 6px;
-      border: 1px solid #e8eaed;
-      max-width: 100%;
-      overflow: hidden;
-      box-sizing: border-box;
-    `;
-    composeArea.parentElement.insertBefore(fallbackContainer, composeArea.nextSibling);
-    targetElement = fallbackContainer;
+  // Strategy 4: Fallback outside any dC div
+  if (!targetElement) {
+    const composeDialog = composeArea.closest('div[role="dialog"]');
+    if (composeDialog) {
+      const fallbackContainer = document.createElement('div');
+      fallbackContainer.style.cssText = `
+        position: relative;
+        margin: 8px 0;
+        text-align: right;
+        padding: 8px;
+        background: transparent;
+        max-width: 100%;
+        overflow: hidden;
+        box-sizing: border-box;
+      `;
+      composeDialog.appendChild(fallbackContainer);
+      targetElement = fallbackContainer;
+      console.log('AI Email Assistant: Used fallback placement outside dC div');
+    }
   }
   
   if (targetElement) {
@@ -153,21 +194,21 @@ function addAIButton(composeArea) {
       overflowFixStyle.id = 'ai-overflow-fix-styles';
       document.head.appendChild(overflowFixStyle);
     }
-    // Create container for AI buttons
+    // Create container for AI buttons - optimized for table cell placement
     const aiContainer = document.createElement('div');
     aiContainer.id = 'ai-email-container';
     aiContainer.style.cssText = `
       display: inline-flex;
-      gap: 4px;
+      gap: 2px;
       align-items: center;
-      margin: 4px;
+      margin: 0;
       flex-wrap: nowrap;
-      max-width: 100%;
       box-sizing: border-box;
       position: relative;
       overflow: visible;
       contain: layout;
       transform: none;
+      vertical-align: middle;
     `;
     
     // Main AI button
