@@ -479,9 +479,14 @@ function addAIButton(composeArea) {
         optionItem.style.color = '#323130';
       });
       
-      optionItem.addEventListener('click', () => {
+      optionItem.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         generateAIResponse(composeArea, option.tone);
-        optionsMenu.style.display = 'none';
+        const menu = document.getElementById('ai-options-menu-outlook');
+        if (menu) {
+          menu.style.display = 'none';
+        }
       });
       
       optionsMenu.appendChild(optionItem);
@@ -491,7 +496,7 @@ function addAIButton(composeArea) {
     aiContainer.appendChild(dropdownButton);
     aiContainer.appendChild(optionsMenu);
     
-    // Add hover effects to container instead of individual buttons
+    // Add hover effects to container - only color changes to prevent overflow
     aiContainer.addEventListener('mouseenter', () => {
       const mainBtn = document.getElementById('ai-email-button-outlook');
       const dropBtn = document.getElementById('ai-options-button-outlook');
@@ -502,8 +507,6 @@ function addAIButton(composeArea) {
       if (dropBtn) {
         dropBtn.style.background = 'linear-gradient(135deg, #005a9e 0%, #004578 100%)';
       }
-      aiContainer.style.transform = 'translateY(-1px)';
-      aiContainer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
     });
     
     aiContainer.addEventListener('mouseleave', () => {
@@ -516,8 +519,6 @@ function addAIButton(composeArea) {
       if (dropBtn) {
         dropBtn.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
       }
-      aiContainer.style.transform = 'translateY(0)';
-      aiContainer.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
     });
     
     // Main button click
@@ -620,6 +621,7 @@ function createEmergencyButton(composeArea) {
 }
 
 async function generateAIResponse(composeArea, tone = 'professional') {
+  let success = false;
   try {
     // Find any available button to update
     const buttonElement = aiButton || 
@@ -654,34 +656,23 @@ async function generateAIResponse(composeArea, tone = 'professional') {
     });
     
     if (response.success) {
+      success = true;
       composeArea.innerHTML = response.data;
       composeArea.focus();
       
-      // Show success feedback
+      // Success - keep button as Regenerate
       if (buttonElement) {
-        buttonElement.innerHTML = '✅ Generated!';
-        buttonElement.style.background = 'linear-gradient(135deg, #107c10 0%, #0e4b0e 100%)';
-        
-        // Also update dropdown button if it exists
-        const dropdownBtn = document.getElementById('ai-options-button-outlook');
-        if (dropdownBtn) {
-          dropdownBtn.style.background = 'linear-gradient(135deg, #107c10 0%, #0e4b0e 100%)';
-        }
-        
-        setTimeout(() => {
-          if (buttonElement && buttonElement.parentNode) {
-            buttonElement.innerHTML = '🤖 Generate AI Reply';
-            buttonElement.style.background = buttonElement.id.includes('emergency') ? 
-              'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)' :
-              'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
-            buttonElement.style.pointerEvents = 'auto';
-          }
-          
-          const dropdownBtnLater = document.getElementById('ai-options-button-outlook');
-          if (dropdownBtnLater) {
-            dropdownBtnLater.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
-          }
-        }, 2000);
+        // Keep the Regenerate text, no flashing
+        buttonElement.innerHTML = '🔄 Regenerate';
+        buttonElement.style.background = buttonElement.id.includes('emergency') ? 
+          'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)' :
+          'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+        buttonElement.style.pointerEvents = 'auto';
+      }
+      
+      const dropdownBtn = document.getElementById('ai-options-button-outlook');
+      if (dropdownBtn) {
+        dropdownBtn.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
       }
     } else {
       alert('Error generating response: ' + response.error);
@@ -697,7 +688,8 @@ async function generateAIResponse(composeArea, tone = 'professional') {
     if (currentButtonElement) {
       currentButtonElement.disabled = false;
       currentButtonElement.style.pointerEvents = 'auto';
-      if (currentButtonElement.innerHTML === '🔄 Regenerate') {
+      // Reset to Generate AI Reply only if there was an error
+      if (!success && currentButtonElement.innerHTML === '🔄 Regenerate') {
         currentButtonElement.innerHTML = '🤖 Generate AI Reply';
       }
     }
