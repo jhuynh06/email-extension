@@ -363,13 +363,16 @@ function addAIButton(composeArea) {
     aiContainer.id = 'ai-email-container-outlook';
     aiContainer.style.cssText = `
       display: inline-flex;
-      gap: 4px;
       align-items: center;
       margin: 4px;
       flex-wrap: nowrap;
-      max-width: 100%;
+      max-width: fit-content;
       box-sizing: border-box;
       position: relative;
+      height: 36px;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     `;
     
     // Main AI button
@@ -380,42 +383,43 @@ function addAIButton(composeArea) {
       background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
       color: white;
       border: none;
-      padding: 10px 16px;
-      border-radius: 4px;
+      padding: 0 16px;
+      border-radius: 4px 0 0 4px;
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
       font-family: 'Segoe UI', 'Segoe UI Web', Arial, sans-serif;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
       transition: all 0.2s ease;
       position: relative;
       z-index: 1000;
-      min-width: 120px;
-      max-width: 150px;
+      height: 36px;
+      min-width: 140px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       box-sizing: border-box;
+      border-right: 1px solid rgba(255,255,255,0.2);
     `;
     
     // Dropdown button for more options
     const dropdownButton = document.createElement('button');
     dropdownButton.id = 'ai-options-button-outlook';
-    dropdownButton.innerHTML = '▼';
+    dropdownButton.innerHTML = '▲';
     dropdownButton.style.cssText = `
       background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
       color: white;
       border: none;
-      padding: 10px 8px;
-      border-radius: 4px;
+      padding: 0 10px;
+      border-radius: 0 4px 4px 0;
       cursor: pointer;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       font-family: 'Segoe UI', 'Segoe UI Web', Arial, sans-serif;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
       transition: all 0.2s ease;
       position: relative;
       z-index: 1000;
+      height: 36px;
+      width: 36px;
       box-sizing: border-box;
     `;
     
@@ -425,18 +429,18 @@ function addAIButton(composeArea) {
     optionsMenu.style.cssText = `
       display: none;
       position: absolute;
-      top: 100%;
+      bottom: 100%;
       right: 0;
       background: white;
       border: 1px solid #d1d1d1;
-      border-radius: 4px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      border-radius: 8px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.28), 0 0 8px rgba(0,0,0,0.12);
       z-index: 1001;
-      min-width: 180px;
-      max-width: 220px;
-      margin-top: 2px;
+      min-width: 200px;
+      margin-bottom: 8px;
       overflow: hidden;
       box-sizing: border-box;
+      backdrop-filter: blur(8px);
     `;
     
     const options = [
@@ -447,27 +451,32 @@ function addAIButton(composeArea) {
       { text: '🤝 Diplomatic Response', tone: 'diplomatic' }
     ];
     
-    options.forEach(option => {
+    options.forEach((option, index) => {
       const optionItem = document.createElement('div');
       optionItem.style.cssText = `
-        padding: 10px 12px;
+        padding: 12px 16px;
         cursor: pointer;
-        border-bottom: 1px solid #f3f2f1;
+        ${index < options.length - 1 ? 'border-bottom: 1px solid #f3f2f1;' : ''}
         font-size: 13px;
         font-family: 'Segoe UI', 'Segoe UI Web', Arial, sans-serif;
-        transition: background-color 0.15s ease;
+        transition: all 0.15s ease;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        display: flex;
+        align-items: center;
+        color: #323130;
       `;
       optionItem.textContent = option.text;
       
       optionItem.addEventListener('mouseenter', () => {
         optionItem.style.backgroundColor = '#f3f2f1';
+        optionItem.style.color = '#0078d4';
       });
       
       optionItem.addEventListener('mouseleave', () => {
-        optionItem.style.backgroundColor = 'white';
+        optionItem.style.backgroundColor = 'transparent';
+        optionItem.style.color = '#323130';
       });
       
       optionItem.addEventListener('click', () => {
@@ -482,19 +491,19 @@ function addAIButton(composeArea) {
     aiContainer.appendChild(dropdownButton);
     aiContainer.appendChild(optionsMenu);
     
-    // Add hover effects
-    [aiButton, dropdownButton].forEach(btn => {
-      btn.addEventListener('mouseenter', () => {
-        btn.style.background = 'linear-gradient(135deg, #005a9e 0%, #004578 100%)';
-        btn.style.transform = 'translateY(-1px)';
-        btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
-      });
-      
-      btn.addEventListener('mouseleave', () => {
-        btn.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
-        btn.style.transform = 'translateY(0)';
-        btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
-      });
+    // Add hover effects to container instead of individual buttons
+    aiContainer.addEventListener('mouseenter', () => {
+      aiButton.style.background = 'linear-gradient(135deg, #005a9e 0%, #004578 100%)';
+      dropdownButton.style.background = 'linear-gradient(135deg, #005a9e 0%, #004578 100%)';
+      aiContainer.style.transform = 'translateY(-1px)';
+      aiContainer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+    });
+    
+    aiContainer.addEventListener('mouseleave', () => {
+      aiButton.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+      dropdownButton.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+      aiContainer.style.transform = 'translateY(0)';
+      aiContainer.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
     });
     
     // Main button click
@@ -600,7 +609,7 @@ async function generateAIResponse(composeArea, tone = 'professional') {
     if (buttonElement) {
       buttonElement.disabled = true;
       const originalHTML = buttonElement.innerHTML;
-      buttonElement.innerHTML = '🔄 Generating...';
+      buttonElement.innerHTML = '🔄 Regenerate';
       buttonElement.style.pointerEvents = 'none';
     }
     
@@ -629,15 +638,25 @@ async function generateAIResponse(composeArea, tone = 'professional') {
       
       // Show success feedback
       if (buttonElement) {
-        const originalText = buttonElement.innerHTML;
         buttonElement.innerHTML = '✅ Generated!';
         buttonElement.style.background = 'linear-gradient(135deg, #107c10 0%, #0e4b0e 100%)';
+        
+        // Also update dropdown button if it exists
+        const dropdownBtn = document.getElementById('ai-options-button-outlook');
+        if (dropdownBtn) {
+          dropdownBtn.style.background = 'linear-gradient(135deg, #107c10 0%, #0e4b0e 100%)';
+        }
         
         setTimeout(() => {
           buttonElement.innerHTML = '🤖 Generate AI Reply';
           buttonElement.style.background = buttonElement.id.includes('emergency') ? 
             'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)' :
             'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+          
+          if (dropdownBtn) {
+            dropdownBtn.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
+          }
+          
           buttonElement.style.pointerEvents = 'auto';
         }, 2000);
       }
@@ -650,7 +669,7 @@ async function generateAIResponse(composeArea, tone = 'professional') {
     if (buttonElement) {
       buttonElement.disabled = false;
       buttonElement.style.pointerEvents = 'auto';
-      if (buttonElement.innerHTML === '🔄 Generating...') {
+      if (buttonElement.innerHTML === '🔄 Regenerate') {
         buttonElement.innerHTML = '🤖 Generate AI Reply';
       }
     }
