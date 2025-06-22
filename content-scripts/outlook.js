@@ -288,13 +288,16 @@ function addAIButton(composeArea) {
         // Create our own toolbar area
         const customToolbar = document.createElement('div');
         customToolbar.style.cssText = `
-          padding: 12px;
+          padding: 6px 8px;
           border-top: 1px solid #e1e1e1;
           background: #faf9f8;
           display: flex;
           justify-content: flex-end;
           align-items: center;
-          margin-top: 8px;
+          margin-top: 4px;
+          max-width: 100%;
+          overflow: hidden;
+          box-sizing: border-box;
         `;
         container.appendChild(customToolbar);
         targetElement = customToolbar;
@@ -309,13 +312,17 @@ function addAIButton(composeArea) {
     const fallbackContainer = document.createElement('div');
     fallbackContainer.style.cssText = `
       position: relative;
-      margin: 10px 0;
+      margin: 8px 0;
       text-align: center;
-      padding: 12px;
-      background: #f3f2f1;
-      border-radius: 6px;
-      border-left: 4px solid #0078d4;
+      padding: 8px;
+      background: #faf9f8;
+      border-radius: 4px;
+      border: 1px solid #e1e1e1;
+      border-left: 3px solid #0078d4;
       z-index: 1000;
+      max-width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
     `;
     
     if (composeArea.parentElement) {
@@ -355,11 +362,14 @@ function addAIButton(composeArea) {
     const aiContainer = document.createElement('div');
     aiContainer.id = 'ai-email-container-outlook';
     aiContainer.style.cssText = `
-      display: flex;
-      gap: 8px;
+      display: inline-flex;
+      gap: 4px;
       align-items: center;
       margin: 4px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      max-width: 100%;
+      box-sizing: border-box;
+      position: relative;
     `;
     
     // Main AI button
@@ -370,17 +380,22 @@ function addAIButton(composeArea) {
       background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
       color: white;
       border: none;
-      padding: 12px 20px;
+      padding: 10px 16px;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       font-family: 'Segoe UI', 'Segoe UI Web', Arial, sans-serif;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
       transition: all 0.2s ease;
       position: relative;
       z-index: 1000;
-      min-width: 140px;
+      min-width: 120px;
+      max-width: 150px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-sizing: border-box;
     `;
     
     // Dropdown button for more options
@@ -391,16 +406,17 @@ function addAIButton(composeArea) {
       background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
       color: white;
       border: none;
-      padding: 12px 8px;
+      padding: 10px 8px;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       font-family: 'Segoe UI', 'Segoe UI Web', Arial, sans-serif;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
       transition: all 0.2s ease;
       position: relative;
       z-index: 1000;
+      box-sizing: border-box;
     `;
     
     // Options menu
@@ -410,14 +426,17 @@ function addAIButton(composeArea) {
       display: none;
       position: absolute;
       top: 100%;
-      left: 0;
+      right: 0;
       background: white;
       border: 1px solid #d1d1d1;
       border-radius: 4px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
       z-index: 1001;
-      min-width: 200px;
-      margin-top: 4px;
+      min-width: 180px;
+      max-width: 220px;
+      margin-top: 2px;
+      overflow: hidden;
+      box-sizing: border-box;
     `;
     
     const options = [
@@ -431,12 +450,15 @@ function addAIButton(composeArea) {
     options.forEach(option => {
       const optionItem = document.createElement('div');
       optionItem.style.cssText = `
-        padding: 12px 16px;
+        padding: 10px 12px;
         cursor: pointer;
-        border-bottom: 1px solid #f0f0f0;
-        font-size: 14px;
+        border-bottom: 1px solid #f3f2f1;
+        font-size: 13px;
         font-family: 'Segoe UI', 'Segoe UI Web', Arial, sans-serif;
-        transition: background-color 0.2s ease;
+        transition: background-color 0.15s ease;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       `;
       optionItem.textContent = option.text;
       
@@ -465,13 +487,13 @@ function addAIButton(composeArea) {
       btn.addEventListener('mouseenter', () => {
         btn.style.background = 'linear-gradient(135deg, #005a9e 0%, #004578 100%)';
         btn.style.transform = 'translateY(-1px)';
-        btn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+        btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
       });
       
       btn.addEventListener('mouseleave', () => {
         btn.style.background = 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)';
         btn.style.transform = 'translateY(0)';
-        btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
       });
     });
     
